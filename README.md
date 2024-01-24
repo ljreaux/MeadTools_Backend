@@ -1,7 +1,9 @@
 # MeadTools_Backend
 
 ##API
+
 ###Requirements
+
 1. Yeasts endpoint ('api/yeasts')
     1. '/'
         - GET request for all yeasts
@@ -28,7 +30,8 @@
         - POST request to create a new user
         - res is the user token
         - Information stored about each user:
-          ``` {
+          ```
+              {
                 firstName: '',
                 lastName: '',
                 username: '',
