@@ -1,6 +1,9 @@
+const bcrypt = require("bcrypt");
+
 const {
   client,
   createUser,
+  updateUser,
   getAllUsers,
   getUser,
   getAllRecipesForUser,
@@ -97,12 +100,13 @@ async function createTables() {
 }
 
 async function createInitialUsers() {
+  const password = await bcrypt.hash("PASSWORD", 10);
   const ADMIN_USER = {
     firstName: "Admin",
     lastName: "User",
     username: "admin",
     email: "contact@meadtools.com",
-    password: "PASSWORD",
+    password,
     role: "admin",
   };
   const USER = {
@@ -110,7 +114,7 @@ async function createInitialUsers() {
     lastName: "User",
     username: "user",
     email: "contact@meadtools.com",
-    password: "PASSWORD",
+    password,
     role: "user",
   };
   try {
@@ -182,9 +186,13 @@ async function createInitialRecipes() {
     numOfAdditions: 3,
     extraIngredients: JSON.stringify(extra_ingredients),
   };
+
+  const MEAD_TWO = { ...TRADITIONAL_MEAD, name: "TWO" };
+
   try {
     console.log("Creating initial recipes...");
     await createRecipe(TRADITIONAL_MEAD);
+    await createRecipe(MEAD_TWO);
     console.log("Initial recipes created");
   } catch (error) {
     console.error("Error while creating initial recipes");
@@ -206,12 +214,19 @@ async function createInitialIngredients() {
 }
 
 async function createInitialYeasts() {
-  for (const [key, value] of Object.entries(YEASTS)) {
-    const values = value.forEach(async (yeast) => {
-      await createYeast({ ...yeast, brand: key });
-    });
-
-    console.log(values);
+  try {
+    for (const [key, value] of Object.entries(YEASTS)) {
+      const values = await Promise.all(
+        value.map(async (yeast) => {
+          const createdYeast = await createYeast({ ...yeast, brand: key });
+          return createdYeast;
+        })
+      );
+    }
+    console.log("Initial Yeasts Created");
+  } catch (error) {
+    console.error("Error while creating initial yeasts");
+    throw error;
   }
 }
 
@@ -231,8 +246,46 @@ async function rebuildDB() {
   }
 }
 
-// async function testDB() {
+async function testDB() {
+  try {
+    console.log("Starting to test database...");
 
-// }
+    console.log("Getting all users...");
+    const users = await getAllUsers();
+    console.log("Result:", users);
 
-rebuildDB();
+    const { id: userId } = users[0];
+
+    const { id } = await getUser(userId);
+    console.log("Got user:", id);
+
+    console.log("Calling updateUser on Admin...");
+    const updatedUser = await updateUser(id, {
+      first_name: "Larry",
+      last_name: "Reaux",
+    });
+    console.log("Updated user:", updatedUser);
+
+    console.log("Getting all recipes from Larry");
+    const recipes = await getAllRecipesForUser(id);
+    console.log("Result:", recipes);
+
+    console.log("Calling getRecipe for recipeId 1");
+    const recipe = await getRecipeInfo(1);
+    console.log("Got recipe:", recipe);
+
+    console.log("Calling updateRecipe for recipeId 1");
+    const updatedRecipe = await updateRecipe(1, {
+      row_count: 1,
+    });
+    console.log("Updated recipe:", updatedRecipe);
+  } catch (error) {
+    console.error("Error during testDB", error);
+    throw error;
+  }
+}
+
+rebuildDB()
+  .then(testDB)
+  .catch(console.error)
+  .finally(() => client.end());

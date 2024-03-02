@@ -61,6 +61,8 @@ async function updateUser(id, fields = {}) {
       Object.values(fields)
     );
 
+    delete user.password;
+
     return user;
   } catch (error) {
     throw error;
@@ -70,8 +72,10 @@ async function updateUser(id, fields = {}) {
 async function getAllUsers() {
   try {
     const { rows: users } = await client.query(`
-      SELECT * FROM users;
+      SELECT id, first_name, last_name, username, email, role
+      FROM users;
     `);
+
     return users;
   } catch (error) {
     throw error;
@@ -402,6 +406,7 @@ async function getYeastByBrand(brand) {
 module.exports = {
   client,
   createUser,
+  updateUser,
   getAllUsers,
   getUser,
   getAllRecipesForUser,
