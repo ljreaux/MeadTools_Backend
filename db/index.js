@@ -223,6 +223,24 @@ async function createIngredient({
   }
 }
 
+async function deleteRecipe(id) {
+  try {
+    const {
+      rows: [recipe],
+    } = await client.query(
+      `
+      DELETE FROM recipes
+      WHERE id=$1
+      RETURNING *;
+    `,
+      [id]
+    );
+    return recipe;
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function updateIngredient(id, fields = {}) {
   // build the set string
   const setString = Object.keys(fields).map(
@@ -277,12 +295,18 @@ async function getIngredient(id) {
 }
 
 async function getIngredientsByCategory(category) {
+  console.log(category);
   try {
     const {
       rows: [ingredients],
     } = await client.query(`
      SELECT * FROM ingredients WHERE category=${category};
     `);
+    if (!ingredients)
+      throw {
+        name: "IngredientsNotFoundError",
+        message: "Ingredients not found",
+      };
     return ingredients;
   } catch (error) {
     throw error;
@@ -301,6 +325,24 @@ async function getIngredientByName(name) {
         name: "IngredientNotFoundError",
         message: "Ingredient not found",
       };
+    return ingredient;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function deleteIngredient(id) {
+  try {
+    const {
+      rows: [ingredient],
+    } = await client.query(
+      `
+      DELETE FROM ingredients
+      WHERE id=$1
+      RETURNING *;
+    `,
+      [id]
+    );
     return ingredient;
   } catch (error) {
     throw error;
@@ -403,6 +445,24 @@ async function getYeastByBrand(brand) {
   }
 }
 
+async function deleteYeast(id) {
+  try {
+    const {
+      rows: [yeast],
+    } = await client.query(
+      `
+      DELETE FROM yeasts
+      WHERE id=$1
+      RETURNING *;
+    `,
+      [id]
+    );
+    return yeast;
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   client,
   createUser,
@@ -413,15 +473,18 @@ module.exports = {
   getRecipeInfo,
   createRecipe,
   updateRecipe,
+  deleteRecipe,
   createIngredient,
   updateIngredient,
   getAllIngredients,
   getIngredient,
   getIngredientsByCategory,
   getIngredientByName,
+  deleteIngredient,
   createYeast,
   updateYeast,
   getAllYeasts,
   getYeastByName,
   getYeastByBrand,
+  deleteYeast,
 };

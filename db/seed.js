@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+require("dotenv").config();
 
 const {
   client,
@@ -10,17 +11,20 @@ const {
   getRecipeInfo,
   createRecipe,
   updateRecipe,
+  deleteRecipe,
   createIngredient,
   updateIngredient,
   getAllIngredients,
   getIngredient,
   getIngredientsByCategory,
   getIngredientByName,
+  deleteIngredient,
   createYeast,
   updateYeast,
   getAllYeasts,
   getYeastByName,
   getYeastByBrand,
+  deleteYeast,
 } = require("./index");
 
 const INGREDIENTS = require("./fermentables.js");
@@ -100,13 +104,14 @@ async function createTables() {
 }
 
 async function createInitialUsers() {
-  const password = await bcrypt.hash("PASSWORD", 10);
+  const adminPassword = bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+  const userPassword = bcrypt.hash(process.env.USER_PASSWORD, 10);
   const ADMIN_USER = {
     firstName: "Admin",
     lastName: "User",
     username: "admin",
     email: "contact@meadtools.com",
-    password,
+    password: adminPassword,
     role: "admin",
   };
   const USER = {
@@ -114,7 +119,7 @@ async function createInitialUsers() {
     lastName: "User",
     username: "user",
     email: "contact@meadtools.com",
-    password,
+    password: userPassword,
     role: "user",
   };
   try {
@@ -279,6 +284,96 @@ async function testDB() {
       row_count: 1,
     });
     console.log("Updated recipe:", updatedRecipe);
+
+    console.log("Calling deleteRecipe for recipeId 1");
+    const deletedRecipe = await deleteRecipe(1);
+    console.log("Deleted recipe:", deletedRecipe);
+
+    console.log("creating test ingredient...");
+    const ingredient = await createIngredient({
+      name: "test",
+      sugarContent: 50,
+      waterContent: 50,
+      category: "sugar",
+    });
+    console.log("Created ingredient:", ingredient);
+
+    console.log("editing test ingredient");
+    const editedIngredient = await updateIngredient(ingredient.id, {
+      name: "edited",
+      sugar_content: 20,
+      water_content: 20,
+      category: "fruit",
+    });
+    console.log("Edited ingredient:", editedIngredient);
+
+    console.log("deleting test ingredient");
+    const deletedIngredient = await deleteIngredient(ingredient.id);
+    console.log("Deleted ingredient:", deletedIngredient);
+
+    console.log("Getting all ingredients");
+    const ingredients = await getAllIngredients();
+    console.log(
+      "Result:",
+      ingredients[0],
+      "...",
+      ingredients[`${ingredients.length - 1}`]
+    );
+
+    console.log("Getting ingredient with the id: " + 1);
+    const ingredientInfo = await getIngredient(1);
+    console.log("Got ingredient:", ingredientInfo);
+
+    // console.log("Getting all ingredients in the fruit category");
+    // const fruits = await getIngredientsByCategory("sugar");
+    // console.log("Got all fruits:", fruits);
+
+    // console.log("Getting ingredient with the name: honey");
+    // const honey = await getIngredientByName("honey");
+    // console.log("Got honey:", honey);
+
+    console.log("testing create new yeast");
+    const yeast = await createYeast({
+      brand: "Lalvin",
+      name: "test",
+      nitrogenRequirement: "Low",
+      tolerance: 16,
+      lowTemp: 50,
+      highTemp: 60,
+    });
+    console.log("Created yeast:", yeast);
+
+    console.log("Editing yeast with the id:", yeast.id);
+    const editedYeast = await updateYeast(yeast.id, {
+      brand: "Other",
+      name: "Editing",
+      nitrogen_requirement: "Medium",
+      tolerance: 16,
+      low_temp: 50,
+      high_temp: 60,
+    });
+    console.log("Edited yeast:", editedYeast);
+
+    console.log("Deleting yeast with the id:", yeast.id);
+    const deletedYeast = await deleteYeast(yeast.id);
+    console.log("Deleted yeast:", deletedYeast);
+
+    console.log("Getting all yeasts");
+    const yeasts = await getAllYeasts();
+    console.log("Result:", yeasts[0], "...", yeasts[`${yeasts.length - 1}`]);
+
+    // console.log("Getting yeast with the name: " + "18-2007");
+    // const yeastInfo = await getYeastByName("18-2007");
+    // console.log("Got yeast:", yeastInfo);
+
+    console.log("Getting all 'Other' yeasts");
+    // const otherYeasts = await getYeastByBrand("Other");
+    // console.log(
+    //   "Result:",
+    //   otherYeasts[0],
+    //   "...",
+    //   otherYeasts[`${otherYeasts.length - 1}`]
+    // );
   } catch (error) {
     console.error("Error during testDB", error);
     throw error;
