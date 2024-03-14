@@ -294,14 +294,16 @@ async function getIngredient(id) {
   }
 }
 
-async function getIngredientsByCategory(category) {
-  console.log(category);
+async function getIngredientsByCategory(cat) {
+  console.log(typeof cat);
   try {
-    const {
-      rows: [ingredients],
-    } = await client.query(`
-     SELECT * FROM ingredients WHERE category=${category};
-    `);
+    const { rows: ingredients } = await client.query(
+      `
+     SELECT * FROM ingredients
+      WHERE category=$1;
+    `,
+      [cat]
+    );
     if (!ingredients)
       throw {
         name: "IngredientsNotFoundError",
@@ -317,9 +319,12 @@ async function getIngredientByName(name) {
   try {
     const {
       rows: [ingredient],
-    } = await client.query(`
-      SELECT * FROM ingredients WHERE name=${name};
-    `);
+    } = await client.query(
+      `
+      SELECT * FROM ingredients WHERE name=$1;
+    `,
+      [name]
+    );
     if (!ingredient)
       throw {
         name: "IngredientNotFoundError",
@@ -413,9 +418,12 @@ async function getYeastByName(name) {
   try {
     const {
       rows: [yeast],
-    } = await client.query(`
-      SELECT * FROM yeasts WHERE name=${name};
-    `);
+    } = await client.query(
+      `
+      SELECT * FROM yeasts WHERE name=$1;
+    `,
+      [name]
+    );
     if (!yeast)
       throw {
         name: "YeastNotFoundError",
@@ -429,17 +437,18 @@ async function getYeastByName(name) {
 
 async function getYeastByBrand(brand) {
   try {
-    const {
-      rows: [yeast],
-    } = await client.query(`
-      SELECT * FROM yeasts WHERE brand=${brand};
-    `);
-    if (!yeast)
+    const { rows: yeasts } = await client.query(
+      `
+      SELECT * FROM yeasts WHERE brand=$1;
+    `,
+      [brand]
+    );
+    if (!yeasts)
       throw {
-        name: "YeastNotFoundError",
-        message: "Yeast not found",
+        name: "YeastsNotFoundError",
+        message: "Yeasts not found",
       };
-    return yeast;
+    return yeasts;
   } catch (error) {
     throw error;
   }

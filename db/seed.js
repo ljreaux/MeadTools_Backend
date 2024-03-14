@@ -324,13 +324,13 @@ async function testDB() {
     const ingredientInfo = await getIngredient(1);
     console.log("Got ingredient:", ingredientInfo);
 
-    // console.log("Getting all ingredients in the fruit category");
-    // const fruits = await getIngredientsByCategory("sugar");
-    // console.log("Got all fruits:", fruits);
+    console.log("Getting all ingredients in the fruit category");
+    const fruits = await getIngredientsByCategory("fruit");
+    console.log("Got all fruits:", fruits);
 
-    // console.log("Getting ingredient with the name: honey");
-    // const honey = await getIngredientByName("honey");
-    // console.log("Got honey:", honey);
+    console.log("Getting ingredient with the name: honey");
+    const honey = await getIngredientByName("Honey");
+    console.log("Got honey:", honey);
 
     console.log("testing create new yeast");
     const yeast = await createYeast({
@@ -362,18 +362,18 @@ async function testDB() {
     const yeasts = await getAllYeasts();
     console.log("Result:", yeasts[0], "...", yeasts[`${yeasts.length - 1}`]);
 
-    // console.log("Getting yeast with the name: " + "18-2007");
-    // const yeastInfo = await getYeastByName("18-2007");
-    // console.log("Got yeast:", yeastInfo);
+    console.log("Getting yeast with the name: " + yeasts[0].name);
+    const yeastInfo = await getYeastByName(yeasts[0].name);
+    console.log("Got yeast:", yeastInfo);
 
     console.log("Getting all 'Other' yeasts");
-    // const otherYeasts = await getYeastByBrand("Other");
-    // console.log(
-    //   "Result:",
-    //   otherYeasts[0],
-    //   "...",
-    //   otherYeasts[`${otherYeasts.length - 1}`]
-    // );
+    const otherYeasts = await getYeastByBrand("Other");
+    console.log(
+      "Result:",
+      otherYeasts[0],
+      "...",
+      otherYeasts[`${otherYeasts.length - 1}`]
+    );
   } catch (error) {
     console.error("Error during testDB", error);
     throw error;
