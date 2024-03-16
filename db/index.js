@@ -15,10 +15,8 @@ async function createUser({
   username,
   email,
   password,
-  role,
+  role = "user",
 }) {
-  if (!role) role = "user";
-
   try {
     const {
       rows: [user],
@@ -86,13 +84,59 @@ async function getUser(id) {
   try {
     const {
       rows: [user],
-    } = await client.query(`
-      SELECT * FROM users WHERE id=${id};
-    `);
-    if (!user) throw { name: "UserNotFoundError", message: "User not found" };
-    delete user.password;
-    user.recipes = await getAllRecipesForUser(id);
+    } = await client.query(
+      `
+      SELECT * FROM users WHERE id=$1;
+    `,
+      [id]
+    );
     return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getUserByUsername(username) {
+  try {
+    const {
+      rows: [user],
+    } = await client.query(
+      `
+      SELECT *
+      FROM users
+      WHERE username=$1
+    `,
+      [username]
+    );
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function deleteUser(id) {
+  try {
+    const {
+      rows: [user],
+    } = await client.query(
+      `
+      DELETE FROM users WHERE id=$1;
+    `,
+      [id]
+    );
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getAllRecipes() {
+  try {
+    const { rows: recipes } = await client.query(`
+      SELECT * FROM recipes;
+    `);
+    return recipes;
   } catch (error) {
     throw error;
   }
@@ -100,9 +144,7 @@ async function getUser(id) {
 
 async function getAllRecipesForUser(id) {
   try {
-    const {
-      rows: [recipes],
-    } = await client.query(`
+    const { rows: recipes } = await client.query(`
       SELECT * FROM recipes WHERE user_id=${id};
     `);
     return recipes;
@@ -115,11 +157,14 @@ async function getRecipeInfo(recipeId) {
   try {
     const {
       rows: [recipe],
-    } = await client.query(`
-      SELECT * FROM recipes WHERE id=${recipeId};
-    `);
+    } = await client.query(
+      `
+      SELECT * FROM recipes WHERE id=$1;
+    `,
+      [recipeId]
+    );
     if (!recipe)
-      throw { name: "RecipeNotFoundError", message: "Recipe not found" };
+      return { name: "RecipeNotFoundError", message: "Recipe not found" };
     return recipe;
   } catch (error) {
     throw error;
@@ -478,6 +523,9 @@ module.exports = {
   updateUser,
   getAllUsers,
   getUser,
+  getUserByUsername,
+  deleteUser,
+  getAllRecipes,
   getAllRecipesForUser,
   getRecipeInfo,
   createRecipe,

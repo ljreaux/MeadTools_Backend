@@ -7,8 +7,13 @@ const server = express();
 
 server.use(cors());
 
+const bodyParser = require("body-parser");
+server.use(bodyParser.json({ limit: "50mb" }));
+
 const apiRouter = require("./api");
 server.use("/api", apiRouter);
+const { client } = require("./db");
+client.connect();
 
 server.use("*", (req, res) => {
   res.redirect("/api/");

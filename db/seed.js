@@ -104,8 +104,8 @@ async function createTables() {
 }
 
 async function createInitialUsers() {
-  const adminPassword = bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
-  const userPassword = bcrypt.hash(process.env.USER_PASSWORD, 10);
+  const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+  const userPassword = await bcrypt.hash(process.env.USER_PASSWORD, 10);
   const ADMIN_USER = {
     firstName: "Admin",
     lastName: "User",
