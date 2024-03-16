@@ -17,9 +17,8 @@ recipesRouter.get("/", async (req, res) => {
 recipesRouter.post("/", requireUser, async (req, res, next) => {
   try {
     const { id: userId } = req.user;
-
     const recipe = await createRecipe({ userId, ...req.body });
-    console.log("This recipe", recipe);
+
     res.send({ recipe });
   } catch ({ name, message }) {
     next({ name, message });
