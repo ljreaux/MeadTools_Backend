@@ -11,7 +11,7 @@ function requireUser(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
-  if (!req.user.admin) {
+  if (req.user.role !== "admin") {
     res.status(401);
     next({
       name: "MissingAdminError",
@@ -22,7 +22,10 @@ function requireAdmin(req, res, next) {
 }
 
 function checkAdmin(user) {
-  return user.admin;
+  if (user.role !== "admin") {
+    return false;
+  }
+  return true;
 }
 
 module.exports = {
