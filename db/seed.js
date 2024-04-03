@@ -55,9 +55,10 @@ async function createTables() {
       id SERIAL PRIMARY KEY,
       first_name varchar(255),
       last_name varchar(255),
-      username varchar(255) UNIQUE NOT NULL,
-      email varchar(255) NOT NULL,
-      password varchar(255) NOT NULL,
+      username varchar(255),
+      email varchar(255) UNIQUE NOT NULL,
+      password varchar(255),
+      google_id varchar(255),
       role varchar(255) DEFAULT 'user'
     );
 
@@ -113,6 +114,7 @@ async function createInitialUsers() {
     email: "contact@meadtools.com",
     password: adminPassword,
     role: "admin",
+    googleId: null,
   };
   const USER = {
     firstName: "User",
@@ -121,6 +123,7 @@ async function createInitialUsers() {
     email: "contact@meadtools.com",
     password: userPassword,
     role: "user",
+    googleId: null,
   };
   try {
     await createUser(ADMIN_USER);

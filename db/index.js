@@ -12,22 +12,23 @@ const client = new Client({
 async function createUser({
   firstName = "",
   lastName = "",
-  username,
+  username = "",
   email,
-  password,
+  password = "",
   role = "user",
+  googleId = "",
 }) {
   try {
     const {
       rows: [user],
     } = await client.query(
       `
-    INSERT INTO users (first_name, last_name, username, email, password, role)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    ON CONFLICT (username) DO NOTHING
+    INSERT INTO users (first_name, last_name, username, email, password, role, google_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    ON CONFLICT (email) DO NOTHING
     RETURNING *;
     `,
-      [firstName, lastName, username, email, password, role]
+      [firstName, lastName, username, email, password, role, googleId]
     );
     return user;
   } catch (error) {
@@ -109,6 +110,24 @@ async function getUserByUsername(username) {
       [username]
     );
 
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getUserByEmail(email) {
+  try {
+    const {
+      rows: [user],
+    } = await client.query(
+      `
+      SELECT *
+      FROM users
+      WHERE email=$1
+    `,
+      [email]
+    );
     return user;
   } catch (error) {
     throw error;
@@ -524,6 +543,7 @@ module.exports = {
   getAllUsers,
   getUser,
   getUserByUsername,
+  getUserByEmail,
   deleteUser,
   getAllRecipes,
   getAllRecipesForUser,

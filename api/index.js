@@ -16,8 +16,8 @@ apiRouter.use(async (req, res, next) => {
     try {
       const { id } = jwt.verify(token, JWT_SECRET);
       if (id) {
-        const { username, role } = await getUser(id);
-        req.user = { id, username, role };
+        const { email, role } = await getUser(id);
+        req.user = { id, email, role };
         next();
       } else
         next({
@@ -40,6 +40,9 @@ apiRouter.use((req, res, next) => {
 
 const usersRouter = require("./users");
 apiRouter.use("/users", usersRouter);
+
+const requestRouter = require("./request");
+apiRouter.use("/request", requestRouter);
 
 const recipesRouter = require("./recipes");
 apiRouter.use("/recipes", recipesRouter);
