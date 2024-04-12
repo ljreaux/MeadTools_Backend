@@ -1,21 +1,21 @@
-const express = require("express");
+import express from "express";
 const yeastsRouter = express.Router();
-const {
+import  {
   getAllYeasts,
   getYeastByBrand,
   getYeastByName,
   createYeast,
   updateYeast,
   deleteYeast,
-} = require("../db");
-const { requireAdmin } = require("./utils");
+} from "../db";
+import { requireAdmin } from "./utils";
 
 yeastsRouter.get("/", async (req, res) => {
   try {
     const yeasts = await getAllYeasts();
     res.send(yeasts);
-  } catch ({ name, message }) {
-    res.send({ name, message });
+  } catch (err) {
+    res.send(err);
   }
 });
 yeastsRouter.post("/", requireAdmin, async (req, res) => {
@@ -23,8 +23,8 @@ yeastsRouter.post("/", requireAdmin, async (req, res) => {
     const { body } = req;
     const newYeast = await createYeast(body);
     res.send(newYeast);
-  } catch ({ name, message }) {
-    res.send({ name, message });
+  } catch (err) {
+    res.send(err);
   }
 });
 yeastsRouter.get("/brand/:brandName", async (req, res) => {
@@ -32,8 +32,8 @@ yeastsRouter.get("/brand/:brandName", async (req, res) => {
     const { brandName } = req.params;
     const yeast = await getYeastByBrand(brandName);
     res.send(yeast);
-  } catch ({ name, message }) {
-    res.send({ name, message });
+  } catch (err) {
+    res.send(err);
   }
 });
 yeastsRouter.get("/:yeastName", async (req, res) => {
@@ -41,8 +41,8 @@ yeastsRouter.get("/:yeastName", async (req, res) => {
     const { yeastName } = req.params;
     const yeast = await getYeastByName(yeastName);
     res.send(yeast);
-  } catch ({ name, message }) {
-    res.send({ name, message });
+  } catch (err) {
+    res.send(err);
   }
 });
 yeastsRouter.patch("/:id", requireAdmin, async (req, res) => {
@@ -51,8 +51,8 @@ yeastsRouter.patch("/:id", requireAdmin, async (req, res) => {
     const { body: fields } = req;
     const updatedYeast = await updateYeast(id, fields);
     res.send(updatedYeast);
-  } catch ({ name, message }) {
-    res.send({ name, message });
+  } catch (err) {
+    res.send(err);
   }
 });
 yeastsRouter.delete("/:id", requireAdmin, async (req, res) => {
@@ -63,9 +63,9 @@ yeastsRouter.delete("/:id", requireAdmin, async (req, res) => {
       name: "Success",
       message: `${deletedYeast.name} has been deleted.`,
     });
-  } catch ({ name, message }) {
-    res.send({ name, message });
+  } catch (err) {
+    res.send(err);
   }
 });
 
-module.exports = yeastsRouter;
+export default yeastsRouter;
