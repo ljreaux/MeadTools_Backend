@@ -1,20 +1,19 @@
 {
   "name": "meadtools_backend",
   "version": "1.0.0",
-  "description": "## API",
+  "description": "Express Rest API using Typescript and PostgreSQL for meadtools.com.",
   "main": "dist/index.js",
   "scripts": {
-    "seed:dev": "nodemon ./db/seed.js",
-    "seed": "node ./db/seed.js",
+    "seed": "npm run build && node ./dist/db/seed.js",
     "build": "npx tsc",
     "start": "node dist/index.js",
-    "start:dev": "nodemon dist/index.js"
+    "start:dev": "npx nodemon src/index.ts"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/ljreaux/MeadTools_Backend"
   },
-  "author": "Larry R.",
+  "author": "Larry Reaux",
   "license": "MIT",
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
