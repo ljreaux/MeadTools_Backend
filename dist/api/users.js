@@ -7,9 +7,9 @@ const express_1 = __importDefault(require("express"));
 const usersRouter = express_1.default.Router();
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const google_auth_library_1 = require("google-auth-library");
-const { getAllUsers, createUser, getUserByUsername, getUser, getAllRecipesForUser, updateUser, getUserByEmail, getUserByGoogleId, } = require("../db");
-const { requireUser } = require("./utils");
-const jwt = require("jsonwebtoken");
+const index_1 = require("../db/index");
+const utils_1 = require("./utils");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 async function getUserData(access_token) {
     const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`);
     const data = await response.json();
@@ -28,12 +28,14 @@ usersRouter.get("/oauth", async (req, res, next) => {
         let userData = null;
         if (user.access_token)
             userData = await getUserData(user.access_token);
-        const userExists = (await getUserByEmail(userData.email)) ||
-            (await getUserByGoogleId(userData.sub));
+        const userExists = (await (0, index_1.getUserByEmail)(userData.email)) ||
+            (await (0, index_1.getUserByGoogleId)(userData.sub));
         if (userExists) {
-            const token = jwt.sign({ id: userExists.id }, process.env.JWT_SECRET, {
-                expiresIn: "1w",
-            });
+            let token;
+            if (process.env.JWT_SECRET)
+                token = jsonwebtoken_1.default.sign({ id: userExists.id }, process.env.JWT_SECRET, {
+                    expiresIn: "1w",
+                });
             const { role } = userExists;
             userResponse = {
                 message: "Successfully logged in!",
@@ -43,15 +45,21 @@ usersRouter.get("/oauth", async (req, res, next) => {
             };
         }
         else {
-            const newUser = await createUser({
-                firstName: userData.given_name,
-                lastName: userData.family_name,
-                email: userData.email,
-                googleId: userData.sub,
+            const firstName = userData.given_name;
+            const lastName = userData.family_name;
+            const email = userData.email;
+            const googleId = userData.sub || null;
+            const newUser = await (0, index_1.createUser)({
+                firstName,
+                lastName,
+                email,
+                googleId,
             });
-            const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
-                expiresIn: "1w",
-            });
+            let token;
+            if (newUser.id && process.env.JWT_SECRET)
+                token = jsonwebtoken_1.default.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+                    expiresIn: "1w",
+                });
             userResponse = {
                 message: "Thank you for signing up!",
                 token,
@@ -67,7 +75,7 @@ usersRouter.get("/oauth", async (req, res, next) => {
 });
 usersRouter.get("/", async (req, res, next) => {
     try {
-        const users = await getAllUsers();
+        const users = await (0, index_1.getAllUsers)();
         res.send({ users: users });
     }
     catch (err) {
@@ -77,7 +85,7 @@ usersRouter.get("/", async (req, res, next) => {
 usersRouter.post("/register", async (req, res, next) => {
     const { username, firstName, lastName, email, password: unhashed } = req.body;
     try {
-        const user = await getUserByUsername(username);
+        const user = await (0, index_1.getUserByUsername)(username);
         if (user) {
             next({
                 name: "UserExistsError",
@@ -85,16 +93,18 @@ usersRouter.post("/register", async (req, res, next) => {
             });
         }
         const password = await bcrypt_1.default.hash(unhashed, 10);
-        const newUser = await createUser({
+        const newUser = await (0, index_1.createUser)({
             username,
             firstName,
             lastName,
             email,
             password,
         });
-        const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
-            expiresIn: "1w",
-        });
+        let token;
+        if (process.env.JWT_SECRET)
+            token = jsonwebtoken_1.default.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+                expiresIn: "1w",
+            });
         const { role } = newUser;
         res.send({
             message: "Thank you for signing up!",
@@ -116,15 +126,17 @@ usersRouter.post("/login", async (req, res, next) => {
         });
     }
     try {
-        const user = await getUserByUsername(username);
+        const user = await (0, index_1.getUserByUsername)(username);
         let auth;
         if (user) {
             auth = await bcrypt_1.default.compare(password, user.password);
         }
         if (user && auth) {
-            const token = jwt.sign({ id: user.id, username }, process.env.JWT_SECRET, {
-                expiresIn: "1w",
-            });
+            let token;
+            if (process.env.JWT_SECRET)
+                token = jsonwebtoken_1.default.sign({ id: user.id, username }, process.env.JWT_SECRET, {
+                    expiresIn: "1w",
+                });
             const { role } = user;
             res.send({
                 message: "Successfully logged in!",
@@ -144,19 +156,19 @@ usersRouter.post("/login", async (req, res, next) => {
         next(err);
     }
 });
-usersRouter.get("/accountInfo", requireUser, async (req, res, next) => {
+usersRouter.get("/accountInfo", utils_1.requireUser, async (req, res, next) => {
     const { id } = req.user || { id: null };
     try {
-        const me = await getUser(id);
+        const me = await (0, index_1.getUser)(id);
         delete me.password;
-        const recipes = await getAllRecipesForUser(id);
+        const recipes = await (0, index_1.getAllRecipesForUser)(id);
         res.send({ ...me, recipes });
     }
     catch (err) {
         next(err);
     }
 });
-usersRouter.patch("/accountInfo", requireUser, async (req, res, next) => {
+usersRouter.patch("/accountInfo", utils_1.requireUser, async (req, res, next) => {
     const { id } = req.user || { id: null };
     const { password: hashed } = req.body;
     try {
@@ -164,7 +176,7 @@ usersRouter.patch("/accountInfo", requireUser, async (req, res, next) => {
             const password = await bcrypt_1.default.hash(hashed, 10);
             req.body.password = password;
         }
-        const updatedUser = await updateUser(id, { ...req.body });
+        const updatedUser = await (0, index_1.updateUser)(id, { ...req.body });
         res.send({ updatedUser });
     }
     catch (err) {

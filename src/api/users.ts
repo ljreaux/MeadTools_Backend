@@ -10,7 +10,7 @@ interface RequestWithCode extends Request {
   };
 }
 
-const {
+import {
   getAllUsers,
   createUser,
   getUserByUsername,
@@ -19,10 +19,10 @@ const {
   updateUser,
   getUserByEmail,
   getUserByGoogleId,
-} = require("../db");
-const { requireUser } = require("./utils");
+} from "../db/index";
+import { requireUser } from "./utils";
 
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
 async function getUserData(access_token: string) {
   const response = await fetch(
@@ -55,9 +55,11 @@ usersRouter.get("/oauth", async (req, res, next) => {
       (await getUserByEmail(userData.email)) ||
       (await getUserByGoogleId(userData.sub));
     if (userExists) {
-      const token = jwt.sign({ id: userExists.id }, process.env.JWT_SECRET, {
-        expiresIn: "1w",
-      });
+      let token;
+      if (process.env.JWT_SECRET)
+        token = jwt.sign({ id: userExists.id }, process.env.JWT_SECRET, {
+          expiresIn: "1w",
+        });
       const { role } = userExists;
       userResponse = {
         message: "Successfully logged in!",
@@ -66,16 +68,22 @@ usersRouter.get("/oauth", async (req, res, next) => {
         email: userData.email,
       };
     } else {
+      const firstName = userData.given_name as string;
+      const lastName = userData.family_name as string;
+      const email = userData.email as string;
+      const googleId = (userData.sub as string) || null;
       const newUser = await createUser({
-        firstName: userData.given_name,
-        lastName: userData.family_name,
-        email: userData.email,
-        googleId: userData.sub,
+        firstName,
+        lastName,
+        email,
+        googleId,
       });
 
-      const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
-        expiresIn: "1w",
-      });
+      let token;
+      if (newUser.id && process.env.JWT_SECRET)
+        token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+          expiresIn: "1w",
+        });
       userResponse = {
         message: "Thank you for signing up!",
         token,
@@ -122,9 +130,11 @@ usersRouter.post("/register", async (req, res, next) => {
       password,
     });
 
-    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
-      expiresIn: "1w",
-    });
+    let token;
+    if (process.env.JWT_SECRET)
+      token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+        expiresIn: "1w",
+      });
 
     const { role } = newUser;
 
@@ -154,13 +164,11 @@ usersRouter.post("/login", async (req, res, next) => {
       auth = await bcrypt.compare(password, user.password);
     }
     if (user && auth) {
-      const token = jwt.sign(
-        { id: user.id, username },
-        process.env.JWT_SECRET,
-        {
+      let token;
+      if (process.env.JWT_SECRET)
+        token = jwt.sign({ id: user.id, username }, process.env.JWT_SECRET, {
           expiresIn: "1w",
-        }
-      );
+        });
       const { role } = user;
       res.send({
         message: "Successfully logged in!",

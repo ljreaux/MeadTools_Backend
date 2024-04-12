@@ -24,6 +24,8 @@ async function createUser({ firstName = "", lastName = "", username = "", email,
 }
 exports.createUser = createUser;
 async function updateUser(id, fields = {}) {
+    if (!id)
+        throw new Error("No User Error");
     // build the set string
     const setString = Object.keys(fields)
         .map((key, index) => `"${key}"=$${index + 1}`)
@@ -61,6 +63,8 @@ async function getAllUsers() {
 }
 exports.getAllUsers = getAllUsers;
 async function getUser(id) {
+    if (!id)
+        throw new Error("No User Error");
     try {
         const { rows: [user], } = await exports.client.query(`
       SELECT * FROM users WHERE id=$1;
@@ -139,6 +143,8 @@ async function getAllRecipes() {
 }
 exports.getAllRecipes = getAllRecipes;
 async function getAllRecipesForUser(id) {
+    if (!id)
+        throw new Error("No User Error");
     try {
         const { rows: recipes } = await exports.client.query(`
       SELECT * FROM recipes WHERE user_id=${id};

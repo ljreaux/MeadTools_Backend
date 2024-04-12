@@ -9,10 +9,11 @@ export const client = new Client({
 });
 
 export interface User {
+  id?: string;
   firstName: string;
   lastName: string;
   username: string;
-  email: string;
+  email: string | null;
   password: string | undefined;
   role: "user" | "admin";
   googleId: string | null;
@@ -57,7 +58,7 @@ export async function createUser({
   password = "",
   role = "user",
   googleId = "",
-}: User) {
+}: Partial<User>): Promise<Partial<User>> {
   try {
     const {
       rows: [user],
@@ -76,7 +77,8 @@ export async function createUser({
   }
 }
 
-export async function updateUser(id: number, fields = {}) {
+export async function updateUser(id: string | null, fields = {}) {
+  if (!id) throw new Error("No User Error");
   // build the set string
   const setString = Object.keys(fields)
     .map((key, index) => `"${key}"=$${index + 1}`)
@@ -121,7 +123,8 @@ export async function getAllUsers() {
   }
 }
 
-export async function getUser(id: string) {
+export async function getUser(id: string | null) {
+  if (!id) throw new Error("No User Error");
   try {
     const {
       rows: [user],
@@ -219,7 +222,8 @@ export async function getAllRecipes() {
   }
 }
 
-export async function getAllRecipesForUser(id: string) {
+export async function getAllRecipesForUser(id: string | null) {
+  if (!id) throw new Error("No User Error");
   try {
     const { rows: recipes } = await client.query(`
       SELECT * FROM recipes WHERE user_id=${id};
