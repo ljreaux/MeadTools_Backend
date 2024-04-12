@@ -134,6 +134,24 @@ async function getUserByEmail(email) {
   }
 }
 
+async function getUserByGoogleId(googleId) {
+  try {
+    const {
+      rows: [user],
+    } = await client.query(
+      `
+      SELECT *
+      FROM users
+      WHERE google_id=$1
+    `,
+      [googleId]
+    );
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function deleteUser(id) {
   try {
     const {
@@ -544,6 +562,7 @@ module.exports = {
   getUser,
   getUserByUsername,
   getUserByEmail,
+  getUserByGoogleId,
   deleteUser,
   getAllRecipes,
   getAllRecipesForUser,

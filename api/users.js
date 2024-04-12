@@ -11,6 +11,7 @@ const {
   getAllRecipesForUser,
   updateUser,
   getUserByEmail,
+  getUserByGoogleId
 } = require("../db");
 const { requireUser } = require("./utils");
 
@@ -41,7 +42,7 @@ usersRouter.get("/oauth", async (req, res, next) => {
     const user = oAuth2Client.credentials;
     const userData = await getUserData(user.access_token);
 
-    const userExists = await getUserByEmail(userData.email);
+    const userExists = await getUserByEmail(userData.email) || await getUserByGoogleId(userData.sub);
     if (userExists) {
       const token = jwt.sign({ id: userExists.id }, process.env.JWT_SECRET, {
         expiresIn: "1w",
