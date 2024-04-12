@@ -44,16 +44,16 @@ usersRouter.get("/oauth", async (req, res, next) => {
       process.env.GOOGLE_CLIENT_SECRET,
       redirectUrl
     );
-    oAuth2Client
-      .getToken(code)
-      .then((res) => oAuth2Client.setCredentials(res.tokens));
+    const { tokens } = await oAuth2Client.getToken(code);
+    oAuth2Client.setCredentials(tokens);
     const user = oAuth2Client.credentials;
     let userData = null;
     if (user.access_token) userData = await getUserData(user.access_token);
 
     const userExists =
-      (await getUserByEmail(userData.email)) ||
-      (await getUserByGoogleId(userData.sub));
+      (await getUserByEmail(userData?.email)) ||
+      (await getUserByGoogleId(userData?.sub));
+
     if (userExists) {
       let token;
       if (process.env.JWT_SECRET)
