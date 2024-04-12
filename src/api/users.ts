@@ -1,7 +1,14 @@
-const express = require("express");
+import express from "express";
 const usersRouter = express.Router();
-const bcrypt = require("bcrypt");
-const { OAuth2Client } = require("google-auth-library");
+import bcrypt from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
+import { UserAuthInfoRequest } from ".";
+
+interface RequestWithCode extends Request {
+  query: {
+    code: string;
+  };
+}
 
 const {
   getAllUsers,
@@ -11,13 +18,13 @@ const {
   getAllRecipesForUser,
   updateUser,
   getUserByEmail,
-  getUserByGoogleId
+  getUserByGoogleId,
 } = require("../db");
 const { requireUser } = require("./utils");
 
 const jwt = require("jsonwebtoken");
 
-async function getUserData(access_token) {
+async function getUserData(access_token: string) {
   const response = await fetch(
     `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`
   );
@@ -26,7 +33,7 @@ async function getUserData(access_token) {
 }
 
 usersRouter.get("/oauth", async (req, res, next) => {
-  const { code } = req.query;
+  let { code } = req.query as RequestWithCode["query"];
   let userResponse;
 
   try {
@@ -37,12 +44,16 @@ usersRouter.get("/oauth", async (req, res, next) => {
       process.env.GOOGLE_CLIENT_SECRET,
       redirectUrl
     );
-    const res = await oAuth2Client.getToken(code);
-    await oAuth2Client.setCredentials(res.tokens);
+    oAuth2Client
+      .getToken(code)
+      .then((res) => oAuth2Client.setCredentials(res.tokens));
     const user = oAuth2Client.credentials;
-    const userData = await getUserData(user.access_token);
+    let userData = null;
+    if (user.access_token) userData = await getUserData(user.access_token);
 
-    const userExists = await getUserByEmail(userData.email) || await getUserByGoogleId(userData.sub);
+    const userExists =
+      (await getUserByEmail(userData.email)) ||
+      (await getUserByGoogleId(userData.sub));
     if (userExists) {
       const token = jwt.sign({ id: userExists.id }, process.env.JWT_SECRET, {
         expiresIn: "1w",
@@ -72,10 +83,13 @@ usersRouter.get("/oauth", async (req, res, next) => {
         email: newUser.email,
       };
     }
-  } catch ({ name, message }) {
-    next(name, message);
+  } catch (err) {
+    next(err);
   }
-  res.redirect(303, `http://localhost:5173/login/?token=${userResponse.token}`);
+  res.redirect(
+    303,
+    `http://localhost:5173/login/?token=${userResponse?.token}`
+  );
 });
 
 usersRouter.get("/", async (req, res, next) => {
@@ -83,8 +97,8 @@ usersRouter.get("/", async (req, res, next) => {
     const users = await getAllUsers();
 
     res.send({ users: users });
-  } catch ({ name, message }) {
-    next({ name, message });
+  } catch (err) {
+    next(err);
   }
 });
 usersRouter.post("/register", async (req, res, next) => {
@@ -120,8 +134,8 @@ usersRouter.post("/register", async (req, res, next) => {
       role,
       username,
     });
-  } catch ({ name, message }) {
-    next({ name, message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -165,33 +179,41 @@ usersRouter.post("/login", async (req, res, next) => {
   }
 });
 
-usersRouter.get("/accountInfo", requireUser, async (req, res, next) => {
-  const { id } = req.user;
-  try {
-    const me = await getUser(id);
-    delete me.password;
-    const recipes = await getAllRecipesForUser(id);
+usersRouter.get(
+  "/accountInfo",
+  requireUser,
+  async (req: UserAuthInfoRequest, res, next) => {
+    const { id } = req.user || { id: null };
+    try {
+      const me = await getUser(id);
+      delete me.password;
+      const recipes = await getAllRecipesForUser(id);
 
-    res.send({ ...me, recipes });
-  } catch ({ name, message }) {
-    next({ name, message });
-  }
-});
-
-usersRouter.patch("/accountInfo", requireUser, async (req, res) => {
-  const { id } = req.user;
-  const { password: hashed } = req.body;
-
-  try {
-    if (hashed) {
-      const password = await bcrypt.hash(hashed, 10);
-      req.body.password = password;
+      res.send({ ...me, recipes });
+    } catch (err) {
+      next(err);
     }
-    const updatedUser = await updateUser(id, { ...req.body });
-    res.send({ updatedUser });
-  } catch ({ name, message }) {
-    next({ name, message });
   }
-});
+);
 
-module.exports = usersRouter;
+usersRouter.patch(
+  "/accountInfo",
+  requireUser,
+  async (req: UserAuthInfoRequest, res, next) => {
+    const { id } = req.user || { id: null };
+    const { password: hashed } = req.body;
+
+    try {
+      if (hashed) {
+        const password = await bcrypt.hash(hashed, 10);
+        req.body.password = password;
+      }
+      const updatedUser = await updateUser(id, { ...req.body });
+      res.send({ updatedUser });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+export default usersRouter;

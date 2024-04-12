@@ -1,21 +1,21 @@
-const express = require("express");
+import express from "express";
 const ingredientsRouter = express.Router();
-const {
+import {
   getAllIngredients,
   getIngredientsByCategory,
   getIngredientByName,
   createIngredient,
   updateIngredient,
   deleteIngredient,
-} = require("../db");
-const { requireAdmin } = require("./utils");
+} from "../db/index";
+import { requireAdmin } from "./utils";
 
 ingredientsRouter.get("/", async (req, res, next) => {
   try {
     const ingredients = await getAllIngredients();
     res.send(ingredients);
-  } catch ({ name, message }) {
-    next({ name, message });
+  } catch (err) {
+    next(err);
   }
 });
 ingredientsRouter.post("/", requireAdmin, async (req, res, next) => {
@@ -23,8 +23,8 @@ ingredientsRouter.post("/", requireAdmin, async (req, res, next) => {
     const { body } = req;
     const newIngredient = await createIngredient(body);
     res.send(newIngredient);
-  } catch ({ name, message }) {
-    next({ name, message });
+  } catch (err) {
+    next(err);
   }
 });
 ingredientsRouter.get("/category/:categoryName", async (req, res, next) => {
@@ -32,8 +32,8 @@ ingredientsRouter.get("/category/:categoryName", async (req, res, next) => {
     const { categoryName } = req.params;
     const ingredients = await getIngredientsByCategory(categoryName);
     res.send(ingredients);
-  } catch ({ name, message }) {
-    next({ name, message });
+  } catch (err) {
+    next(err);
   }
 });
 
@@ -42,8 +42,8 @@ ingredientsRouter.get("/:ingredientName", async (req, res, next) => {
     const { ingredientName } = req.params;
     const ingredient = await getIngredientByName(ingredientName);
     res.send(ingredient);
-  } catch ({ name, message }) {
-    next({ name, message });
+  } catch (err) {
+    next(err);
   }
 });
 ingredientsRouter.patch(
@@ -55,8 +55,8 @@ ingredientsRouter.patch(
       const { body: fields } = req;
       const updatedIngredient = await updateIngredient(id, fields);
       res.send(updatedIngredient);
-    } catch ({ name, message }) {
-      next({ name, message });
+    } catch (err) {
+      next(err);
     }
   }
 );
@@ -71,10 +71,10 @@ ingredientsRouter.delete(
         name: "Success",
         message: `${deletedIngredient.name} has been deleted`,
       });
-    } catch ({ name, message }) {
-      next({ name, message });
+    } catch (err) {
+      next(err);
     }
   }
 );
 
-module.exports = ingredientsRouter;
+export default ingredientsRouter;

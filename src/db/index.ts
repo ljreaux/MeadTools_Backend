@@ -1,6 +1,5 @@
-const { Client } = require("pg");
-
-const client = new Client({
+import { Client } from "pg";
+export const client = new Client({
   connectionString:
     process.env.DATABASE_URL || "postgres://localhost:5432/meadtools-dev",
   ssl:
@@ -9,7 +8,48 @@ const client = new Client({
       : undefined,
 });
 
-async function createUser({
+export interface User {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  password: string | undefined;
+  role: "user" | "admin";
+  googleId: string | null;
+}
+
+interface Recipe {
+  userId: number;
+  name: string;
+  ingredients: string;
+  units: string;
+  volUnits: string;
+  rowCount: number;
+  submitted: boolean;
+  yeastInfo: string;
+  yeastBrand: string;
+  nuteSchedule: string;
+  numOfAdditions: number;
+  extraIngredients: string;
+}
+
+interface Ingredient {
+  name: string;
+  sugarContent: number;
+  waterContent: number;
+  category: string;
+}
+
+export interface Yeast {
+  brand: string;
+  name: string;
+  nitrogenRequirement: string;
+  tolerance: number | string;
+  lowTemp: number;
+  highTemp: number;
+}
+
+export async function createUser({
   firstName = "",
   lastName = "",
   username = "",
@@ -17,7 +57,7 @@ async function createUser({
   password = "",
   role = "user",
   googleId = "",
-}) {
+}: User) {
   try {
     const {
       rows: [user],
@@ -36,7 +76,7 @@ async function createUser({
   }
 }
 
-async function updateUser(id, fields = {}) {
+export async function updateUser(id: number, fields = {}) {
   // build the set string
   const setString = Object.keys(fields)
     .map((key, index) => `"${key}"=$${index + 1}`)
@@ -68,7 +108,7 @@ async function updateUser(id, fields = {}) {
   }
 }
 
-async function getAllUsers() {
+export async function getAllUsers() {
   try {
     const { rows: users } = await client.query(`
       SELECT id, first_name, last_name, username, email, role
@@ -81,7 +121,7 @@ async function getAllUsers() {
   }
 }
 
-async function getUser(id) {
+export async function getUser(id: string) {
   try {
     const {
       rows: [user],
@@ -97,7 +137,7 @@ async function getUser(id) {
   }
 }
 
-async function getUserByUsername(username) {
+export async function getUserByUsername(username: string) {
   try {
     const {
       rows: [user],
@@ -116,7 +156,7 @@ async function getUserByUsername(username) {
   }
 }
 
-async function getUserByEmail(email) {
+export async function getUserByEmail(email: string) {
   try {
     const {
       rows: [user],
@@ -134,7 +174,7 @@ async function getUserByEmail(email) {
   }
 }
 
-async function getUserByGoogleId(googleId) {
+export async function getUserByGoogleId(googleId: number) {
   try {
     const {
       rows: [user],
@@ -152,7 +192,7 @@ async function getUserByGoogleId(googleId) {
   }
 }
 
-async function deleteUser(id) {
+export async function deleteUser(id: string) {
   try {
     const {
       rows: [user],
@@ -168,7 +208,7 @@ async function deleteUser(id) {
   }
 }
 
-async function getAllRecipes() {
+export async function getAllRecipes() {
   try {
     const { rows: recipes } = await client.query(`
       SELECT * FROM recipes;
@@ -179,7 +219,7 @@ async function getAllRecipes() {
   }
 }
 
-async function getAllRecipesForUser(id) {
+export async function getAllRecipesForUser(id: string) {
   try {
     const { rows: recipes } = await client.query(`
       SELECT * FROM recipes WHERE user_id=${id};
@@ -190,7 +230,7 @@ async function getAllRecipesForUser(id) {
   }
 }
 
-async function getRecipeInfo(recipeId) {
+export async function getRecipeInfo(recipeId: string) {
   try {
     const {
       rows: [recipe],
@@ -208,7 +248,7 @@ async function getRecipeInfo(recipeId) {
   }
 }
 
-async function createRecipe({
+export async function createRecipe({
   userId,
   name,
   ingredients,
@@ -221,7 +261,7 @@ async function createRecipe({
   nuteSchedule,
   numOfAdditions,
   extraIngredients,
-}) {
+}: Recipe) {
   try {
     const {
       rows: [recipe],
@@ -252,7 +292,7 @@ async function createRecipe({
   }
 }
 
-async function updateRecipe(id, fields = {}) {
+export async function updateRecipe(id: string, fields = {}) {
   // build the set string
   const setString = Object.keys(fields)
     .map((key, index) => `"${key}"=$${index + 1}`)
@@ -282,12 +322,12 @@ async function updateRecipe(id, fields = {}) {
   }
 }
 
-async function createIngredient({
+export async function createIngredient({
   name,
   sugarContent,
   waterContent,
   category,
-}) {
+}: Ingredient) {
   try {
     const {
       rows: [ingredient],
@@ -305,7 +345,7 @@ async function createIngredient({
   }
 }
 
-async function deleteRecipe(id) {
+export async function deleteRecipe(id: string) {
   try {
     const {
       rows: [recipe],
@@ -323,7 +363,7 @@ async function deleteRecipe(id) {
   }
 }
 
-async function updateIngredient(id, fields = {}) {
+export async function updateIngredient(id: string, fields = {}) {
   // build the set string
   const setString = Object.keys(fields).map(
     (key, index) => `"${key}"=$${index + 1}`
@@ -347,7 +387,7 @@ async function updateIngredient(id, fields = {}) {
   }
 }
 
-async function getAllIngredients() {
+export async function getAllIngredients() {
   try {
     const { rows: ingredients } = await client.query(`
       SELECT * FROM ingredients;
@@ -358,7 +398,7 @@ async function getAllIngredients() {
   }
 }
 
-async function getIngredient(id) {
+export async function getIngredient(id: string) {
   try {
     const {
       rows: [ingredient],
@@ -376,7 +416,7 @@ async function getIngredient(id) {
   }
 }
 
-async function getIngredientsByCategory(cat) {
+export async function getIngredientsByCategory(cat: string) {
   console.log(typeof cat);
   try {
     const { rows: ingredients } = await client.query(
@@ -397,7 +437,7 @@ async function getIngredientsByCategory(cat) {
   }
 }
 
-async function getIngredientByName(name) {
+export async function getIngredientByName(name: string) {
   try {
     const {
       rows: [ingredient],
@@ -418,7 +458,7 @@ async function getIngredientByName(name) {
   }
 }
 
-async function deleteIngredient(id) {
+export async function deleteIngredient(id: string) {
   try {
     const {
       rows: [ingredient],
@@ -436,14 +476,14 @@ async function deleteIngredient(id) {
   }
 }
 
-async function createYeast({
+export async function createYeast({
   brand,
   name,
   nitrogenRequirement,
   tolerance,
   lowTemp,
   highTemp,
-}) {
+}: Yeast) {
   try {
     const {
       rows: [yeast],
@@ -461,7 +501,7 @@ async function createYeast({
   }
 }
 
-async function updateYeast(id, fields = {}) {
+export async function updateYeast(id: string, fields = {}) {
   // build the set string
   const setString = Object.keys(fields).map(
     (key, index) => `"${key}"=$${index + 1}`
@@ -485,7 +525,7 @@ async function updateYeast(id, fields = {}) {
   }
 }
 
-async function getAllYeasts() {
+export async function getAllYeasts() {
   try {
     const { rows: yeasts } = await client.query(`
       SELECT * FROM yeasts;
@@ -496,7 +536,7 @@ async function getAllYeasts() {
   }
 }
 
-async function getYeastByName(name) {
+export async function getYeastByName(name: string) {
   try {
     const {
       rows: [yeast],
@@ -517,7 +557,7 @@ async function getYeastByName(name) {
   }
 }
 
-async function getYeastByBrand(brand) {
+export async function getYeastByBrand(brand: string) {
   try {
     const { rows: yeasts } = await client.query(
       `
@@ -536,7 +576,7 @@ async function getYeastByBrand(brand) {
   }
 }
 
-async function deleteYeast(id) {
+export async function deleteYeast(id: string) {
   try {
     const {
       rows: [yeast],
@@ -553,34 +593,3 @@ async function deleteYeast(id) {
     throw error;
   }
 }
-
-module.exports = {
-  client,
-  createUser,
-  updateUser,
-  getAllUsers,
-  getUser,
-  getUserByUsername,
-  getUserByEmail,
-  getUserByGoogleId,
-  deleteUser,
-  getAllRecipes,
-  getAllRecipesForUser,
-  getRecipeInfo,
-  createRecipe,
-  updateRecipe,
-  deleteRecipe,
-  createIngredient,
-  updateIngredient,
-  getAllIngredients,
-  getIngredient,
-  getIngredientsByCategory,
-  getIngredientByName,
-  deleteIngredient,
-  createYeast,
-  updateYeast,
-  getAllYeasts,
-  getYeastByName,
-  getYeastByBrand,
-  deleteYeast,
-};

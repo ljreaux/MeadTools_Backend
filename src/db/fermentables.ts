@@ -1,4 +1,18 @@
-const INGREDIENTS = [
+interface Ingredient {
+  name: string;
+  sugarContent: number;
+  waterContent: number;
+  category:
+    | "sugar"
+    | "fruit"
+    | "other"
+    | "water"
+    | "juice"
+    | "vegetable"
+    | "dried fruit";
+}
+
+const INGREDIENTS: Ingredient[] = [
   {
     name: "Honey",
     sugarContent: 79.6,
@@ -367,4 +381,4 @@ const INGREDIENTS = [
   },
 ];
 
-module.exports = INGREDIENTS;
+export default INGREDIENTS;

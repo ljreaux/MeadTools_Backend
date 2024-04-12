@@ -1,4 +1,20 @@
-const YEASTS = {
+interface Yeast {
+  name: string,
+  nitrogenRequirement: 'Low' | 'Medium' | 'High' | 'Very High',
+  tolerance: number | string,
+  lowTemp: number,
+  highTemp: number
+}
+
+interface Yeasts {
+  Lalvin: Yeast[],
+  Fermentis: Yeast[],
+  ["Mangrove Jack"]: Yeast[],
+  ["Red Star"]: Yeast[],
+  Other: Yeast[]
+}
+
+const YEASTS : Yeasts = {
   Lalvin: [
     {
       name: "18-2007",
@@ -296,7 +312,7 @@ const YEASTS = {
     },
     {
       name: "LEVULINE BRG",
-      nitrogenRequirement: "HIgh",
+      nitrogenRequirement: "High",
       tolerance: 15,
       lowTemp: 64,
       highTemp: 88,
@@ -753,4 +769,4 @@ const YEASTS = {
   ],
 };
 
-module.exports = YEASTS;
+export default YEASTS;

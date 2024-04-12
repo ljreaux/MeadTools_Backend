@@ -1,7 +1,8 @@
-const bcrypt = require("bcrypt");
-require("dotenv").config();
+import bcrypt from "bcrypt";
+import dotenv from "dotenv";
+dotenv.config();
 
-const {
+import {
   client,
   createUser,
   updateUser,
@@ -25,10 +26,12 @@ const {
   getYeastByName,
   getYeastByBrand,
   deleteYeast,
-} = require("./index");
+  User,
+  Yeast,
+} from "./index";
 
-const INGREDIENTS = require("./fermentables.js");
-const YEASTS = require("./yeast.js");
+import INGREDIENTS from "./fermentables.js";
+import YEASTS from "./yeast.js";
 
 async function dropTables() {
   try {
@@ -105,9 +108,13 @@ async function createTables() {
 }
 
 async function createInitialUsers() {
-  const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
-  const userPassword = await bcrypt.hash(process.env.USER_PASSWORD, 10);
-  const ADMIN_USER = {
+  let adminPassword;
+  let userPassword;
+  if (process.env.ADMIN_PASSWORD && process.env.USER_PASSWORD) {
+    adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+    userPassword = await bcrypt.hash(process.env.USER_PASSWORD, 10);
+  }
+  const ADMIN_USER: User = {
     firstName: "Admin",
     lastName: "User",
     username: "admin",
@@ -116,7 +123,7 @@ async function createInitialUsers() {
     role: "admin",
     googleId: null,
   };
-  const USER = {
+  const USER: User = {
     firstName: "User",
     lastName: "User",
     username: "user",
@@ -225,7 +232,7 @@ async function createInitialYeasts() {
   try {
     for (const [key, value] of Object.entries(YEASTS)) {
       const values = await Promise.all(
-        value.map(async (yeast) => {
+        value.map(async (yeast: Yeast) => {
           const createdYeast = await createYeast({ ...yeast, brand: key });
           return createdYeast;
         })
@@ -279,17 +286,17 @@ async function testDB() {
     console.log("Result:", recipes);
 
     console.log("Calling getRecipe for recipeId 1");
-    const recipe = await getRecipeInfo(1);
+    const recipe = await getRecipeInfo("1");
     console.log("Got recipe:", recipe);
 
     console.log("Calling updateRecipe for recipeId 1");
-    const updatedRecipe = await updateRecipe(1, {
+    const updatedRecipe = await updateRecipe("1", {
       row_count: 1,
     });
     console.log("Updated recipe:", updatedRecipe);
 
     console.log("Calling deleteRecipe for recipeId 1");
-    const deletedRecipe = await deleteRecipe(1);
+    const deletedRecipe = await deleteRecipe("1");
     console.log("Deleted recipe:", deletedRecipe);
 
     console.log("creating test ingredient...");
@@ -324,7 +331,7 @@ async function testDB() {
     );
 
     console.log("Getting ingredient with the id: " + 1);
-    const ingredientInfo = await getIngredient(1);
+    const ingredientInfo = await getIngredient("1");
     console.log("Got ingredient:", ingredientInfo);
 
     console.log("Getting all ingredients in the fruit category");

@@ -1,20 +1,28 @@
-const express = require("express");
+import express, {Request } from "express";
 const apiRouter = express.Router();
-const path = require("path");
+import path from "path";
 
-const jwt = require("jsonwebtoken");
-const { getUser } = require("../db");
+import jwt from "jsonwebtoken";
+import { getUser } from "../db/index";
 const { JWT_SECRET } = process.env;
 
 apiRouter.use(express.static(path.join(__dirname, "documentation")));
 
-apiRouter.use(async (req, res, next) => {
+interface JwtPayload {
+  id: string
+}
+
+export interface UserAuthInfoRequest extends Request {
+  user?: { id: string, email: string, role: 'user' | 'admin' } 
+}
+
+apiRouter.use(async (req: UserAuthInfoRequest, res, next) => {
   const auth = req.header("Authorization");
   const token = auth?.split(" ")[1];
-  if (!auth) next();
+  if (!auth || !token || !JWT_SECRET) next();
   else {
     try {
-      const { id } = jwt.verify(token, JWT_SECRET);
+      const { id } = jwt.verify(token, JWT_SECRET) as JwtPayload;
       if (id) {
         const { email, role } = await getUser(id);
         req.user = { id, email, role };
@@ -24,13 +32,13 @@ apiRouter.use(async (req, res, next) => {
           name: "AuthorizationHeaderError",
           message: "Authorization token malformed",
         });
-    } catch ({ name, message }) {
-      next({ name, message });
+    } catch (err) {
+      next(err);
     }
   }
 });
 
-apiRouter.use((req, res, next) => {
+apiRouter.use((req: UserAuthInfoRequest, res, next) => {
   if (req.user) {
     console.log("User is set:", req.user);
   }
@@ -38,19 +46,19 @@ apiRouter.use((req, res, next) => {
   next();
 });
 
-const usersRouter = require("./users");
+import usersRouter from "./users";
 apiRouter.use("/users", usersRouter);
 
-const requestRouter = require("./request");
+import requestRouter from "./request";
 apiRouter.use("/request", requestRouter);
 
-const recipesRouter = require("./recipes");
+import recipesRouter from "./recipes";
 apiRouter.use("/recipes", recipesRouter);
 
-const ingredientsRouter = require("./ingredients");
+import ingredientsRouter from "./ingredients";
 apiRouter.use("/ingredients", ingredientsRouter);
 
-const yeastsRouter = require("./yeasts");
+import yeastsRouter from "./yeasts";
 apiRouter.use("/yeasts", yeastsRouter);
 
-module.exports = apiRouter;
+export default apiRouter;
