@@ -9,7 +9,7 @@ const google_auth_library_1 = require("google-auth-library");
 requestRouter.post("/", async function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "http://localhost:5173");
     res.header("Referrer-Policy", "no-referrer-when-downgrade");
-    const redirectUrl = "http://localhost:3000/api/users/oauth";
+    const redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";
     const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUrl);
     const authorizeUrl = oAuth2Client.generateAuthUrl({
         access_type: "offline",

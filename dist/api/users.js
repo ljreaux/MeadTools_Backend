@@ -19,7 +19,7 @@ usersRouter.get("/oauth", async (req, res, next) => {
     let { code } = req.query;
     let userResponse;
     try {
-        const redirectUrl = "http://localhost:3000/api/users/oauth";
+        const redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";
         const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUrl);
         const { tokens } = await oAuth2Client.getToken(code);
         oAuth2Client.setCredentials(tokens);
