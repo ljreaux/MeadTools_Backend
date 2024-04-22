@@ -13,7 +13,6 @@ interface RequestWithCode extends Request {
 import {
   getAllUsers,
   createUser,
-  getUserByUsername,
   getUser,
   getAllRecipesForUser,
   updateUser,
@@ -73,8 +72,6 @@ usersRouter.get("/oauth", async (req, res, next) => {
       const email = userData.email as string;
       const googleId = (userData.sub as string) || null;
       const newUser = await createUser({
-        firstName,
-        lastName,
         email,
         googleId,
       });
@@ -110,10 +107,10 @@ usersRouter.get("/", async (req, res, next) => {
   }
 });
 usersRouter.post("/register", async (req, res, next) => {
-  const { username, firstName, lastName, email, password: unhashed } = req.body;
+  const { email, password: unhashed } = req.body;
 
   try {
-    const user = await getUserByUsername(username);
+    const user = await getUserByEmail(email);
     if (user) {
       next({
         name: "UserExistsError",
@@ -123,9 +120,6 @@ usersRouter.post("/register", async (req, res, next) => {
 
     const password = await bcrypt.hash(unhashed, 10);
     const newUser = await createUser({
-      username,
-      firstName,
-      lastName,
       email,
       password,
     });
@@ -142,7 +136,7 @@ usersRouter.post("/register", async (req, res, next) => {
       message: "Thank you for signing up!",
       token,
       role,
-      username,
+      email,
     });
   } catch (err) {
     next(err);
@@ -150,15 +144,15 @@ usersRouter.post("/register", async (req, res, next) => {
 });
 
 usersRouter.post("/login", async (req, res, next) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
+  const { email, password } = req.body;
+  if (!email || !password) {
     next({
       name: "MissingCredentialsError",
-      message: "Please provide username and password",
+      message: "Please provide email and password",
     });
   }
   try {
-    const user = await getUserByUsername(username);
+    const user = await getUserByEmail(email);
     let auth;
     if (user) {
       auth = await bcrypt.compare(password, user.password);
@@ -166,7 +160,7 @@ usersRouter.post("/login", async (req, res, next) => {
     if (user && auth) {
       let token;
       if (process.env.JWT_SECRET)
-        token = jwt.sign({ id: user.id, username }, process.env.JWT_SECRET, {
+        token = jwt.sign({ id: user.id, email }, process.env.JWT_SECRET, {
           expiresIn: "1w",
         });
       const { role } = user;
@@ -174,12 +168,12 @@ usersRouter.post("/login", async (req, res, next) => {
         message: "Successfully logged in!",
         token,
         role,
-        username,
+        email,
       });
     } else {
       next({
         name: "InvalidCredentialsError",
-        message: "Invalid username or password",
+        message: "Invalid email or password",
       });
     }
   } catch (err) {

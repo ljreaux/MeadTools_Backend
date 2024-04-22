@@ -21,15 +21,14 @@ usersRouter.get("/oauth", async (req, res, next) => {
     try {
         const redirectUrl = "http://localhost:3000/api/users/oauth";
         const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUrl);
-        oAuth2Client
-            .getToken(code)
-            .then((res) => oAuth2Client.setCredentials(res.tokens));
+        const { tokens } = await oAuth2Client.getToken(code);
+        oAuth2Client.setCredentials(tokens);
         const user = oAuth2Client.credentials;
         let userData = null;
         if (user.access_token)
             userData = await getUserData(user.access_token);
-        const userExists = (await (0, index_1.getUserByEmail)(userData.email)) ||
-            (await (0, index_1.getUserByGoogleId)(userData.sub));
+        const userExists = (await (0, index_1.getUserByEmail)(userData?.email)) ||
+            (await (0, index_1.getUserByGoogleId)(userData?.sub));
         if (userExists) {
             let token;
             if (process.env.JWT_SECRET)
@@ -50,8 +49,6 @@ usersRouter.get("/oauth", async (req, res, next) => {
             const email = userData.email;
             const googleId = userData.sub || null;
             const newUser = await (0, index_1.createUser)({
-                firstName,
-                lastName,
                 email,
                 googleId,
             });
@@ -83,9 +80,9 @@ usersRouter.get("/", async (req, res, next) => {
     }
 });
 usersRouter.post("/register", async (req, res, next) => {
-    const { username, firstName, lastName, email, password: unhashed } = req.body;
+    const { email, password: unhashed } = req.body;
     try {
-        const user = await (0, index_1.getUserByUsername)(username);
+        const user = await (0, index_1.getUserByEmail)(email);
         if (user) {
             next({
                 name: "UserExistsError",
@@ -94,9 +91,6 @@ usersRouter.post("/register", async (req, res, next) => {
         }
         const password = await bcrypt_1.default.hash(unhashed, 10);
         const newUser = await (0, index_1.createUser)({
-            username,
-            firstName,
-            lastName,
             email,
             password,
         });
@@ -110,7 +104,7 @@ usersRouter.post("/register", async (req, res, next) => {
             message: "Thank you for signing up!",
             token,
             role,
-            username,
+            email,
         });
     }
     catch (err) {
@@ -118,15 +112,15 @@ usersRouter.post("/register", async (req, res, next) => {
     }
 });
 usersRouter.post("/login", async (req, res, next) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
+    const { email, password } = req.body;
+    if (!email || !password) {
         next({
             name: "MissingCredentialsError",
-            message: "Please provide username and password",
+            message: "Please provide email and password",
         });
     }
     try {
-        const user = await (0, index_1.getUserByUsername)(username);
+        const user = await (0, index_1.getUserByEmail)(email);
         let auth;
         if (user) {
             auth = await bcrypt_1.default.compare(password, user.password);
@@ -134,7 +128,7 @@ usersRouter.post("/login", async (req, res, next) => {
         if (user && auth) {
             let token;
             if (process.env.JWT_SECRET)
-                token = jsonwebtoken_1.default.sign({ id: user.id, username }, process.env.JWT_SECRET, {
+                token = jsonwebtoken_1.default.sign({ id: user.id, email }, process.env.JWT_SECRET, {
                     expiresIn: "1w",
                 });
             const { role } = user;
@@ -142,13 +136,13 @@ usersRouter.post("/login", async (req, res, next) => {
                 message: "Successfully logged in!",
                 token,
                 role,
-                username,
+                email,
             });
         }
         else {
             next({
                 name: "InvalidCredentialsError",
-                message: "Invalid username or password",
+                message: "Invalid email or password",
             });
         }
     }

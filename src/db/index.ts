@@ -10,9 +10,6 @@ export const client = new Client({
 
 export interface User {
   id?: string;
-  firstName: string;
-  lastName: string;
-  username: string;
   email: string | null;
   password: string | undefined;
   role: "user" | "admin";
@@ -22,16 +19,14 @@ export interface User {
 interface Recipe {
   userId: number;
   name: string;
-  ingredients: string;
-  units: string;
-  volUnits: string;
-  rowCount: number;
-  submitted: boolean;
-  yeastInfo: string;
-  yeastBrand: string;
-  nuteSchedule: string;
-  numOfAdditions: number;
-  extraIngredients: string;
+  recipeData: string;
+  yanFromSource: string | null;
+  yanContribution: string | null;
+  nutrientData: string;
+  advanced: boolean;
+  nuteInfo: string;
+  primaryNotes?: string[];
+  secondaryNotes?: string[];
 }
 
 interface Ingredient {
@@ -51,9 +46,6 @@ export interface Yeast {
 }
 
 export async function createUser({
-  firstName = "",
-  lastName = "",
-  username = "",
   email,
   password = "",
   role = "user",
@@ -64,12 +56,12 @@ export async function createUser({
       rows: [user],
     } = await client.query(
       `
-    INSERT INTO users (first_name, last_name, username, email, password, role, google_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO users (email, password, role, google_id)
+    VALUES ($1, $2, $3, $4)
     ON CONFLICT (email) DO NOTHING
     RETURNING *;
     `,
-      [firstName, lastName, username, email, password, role, googleId]
+      [email, password, role, googleId]
     );
     return user;
   } catch (error) {
@@ -113,7 +105,7 @@ export async function updateUser(id: string | null, fields = {}) {
 export async function getAllUsers() {
   try {
     const { rows: users } = await client.query(`
-      SELECT id, first_name, last_name, username, email, role
+      SELECT id, email, role
       FROM users;
     `);
 
@@ -134,25 +126,6 @@ export async function getUser(id: string | null) {
     `,
       [id]
     );
-    return user;
-  } catch (error) {
-    throw error;
-  }
-}
-
-export async function getUserByUsername(username: string) {
-  try {
-    const {
-      rows: [user],
-    } = await client.query(
-      `
-      SELECT *
-      FROM users
-      WHERE username=$1
-    `,
-      [username]
-    );
-
     return user;
   } catch (error) {
     throw error;
@@ -255,39 +228,44 @@ export async function getRecipeInfo(recipeId: string) {
 export async function createRecipe({
   userId,
   name,
-  ingredients,
-  units,
-  volUnits,
-  rowCount,
-  submitted,
-  yeastInfo,
-  yeastBrand,
-  nuteSchedule,
-  numOfAdditions,
-  extraIngredients,
+  recipeData,
+  yanFromSource,
+  yanContribution,
+  nutrientData,
+  advanced,
+  nuteInfo,
+  primaryNotes = ["", ""],
+  secondaryNotes = ["", ""],
 }: Recipe) {
   try {
     const {
       rows: [recipe],
     } = await client.query(
       `
-      INSERT INTO recipes (user_id, name, ingredients, units, vol_units, row_count, submitted, yeast_info, yeast_brand, nute_schedule, num_of_additions, extra_ingredients)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      INSERT INTO recipes (user_id,
+        name,
+        "recipeData",
+        "yanFromSource",
+        "yanContribution",
+        "nutrientData",
+        advanced,
+        "nuteInfo",
+       "primaryNotes",
+        "secondaryNotes")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *;
     `,
       [
         userId,
         name,
-        ingredients,
-        units,
-        volUnits,
-        rowCount,
-        submitted,
-        yeastInfo,
-        yeastBrand,
-        nuteSchedule,
-        numOfAdditions,
-        extraIngredients,
+        recipeData,
+        yanFromSource,
+        yanContribution,
+        nutrientData,
+        advanced,
+        nuteInfo,
+        primaryNotes,
+        secondaryNotes,
       ]
     );
     return recipe;

@@ -56,9 +56,6 @@ async function createTables() {
     await client.query(`
     CREATE TABLE users (
       id SERIAL PRIMARY KEY,
-      first_name varchar(255),
-      last_name varchar(255),
-      username varchar(255),
       email varchar(255) UNIQUE NOT NULL,
       password varchar(255),
       google_id varchar(255),
@@ -69,16 +66,14 @@ async function createTables() {
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id),
       name varchar(255) NOT NULL,
-      ingredients TEXT NOT NULL,
-      units varchar(255) NOT NULL,
-      vol_units varchar(255) NOT NULL,
-      row_count int NOT NULL,
-      submitted boolean DEFAULT true NOT NULL,
-      yeast_info TEXT NOT NULL,
-      yeast_brand varchar(255) NOT NULL,
-      nute_schedule varchar(255) NOT NULL,
-      num_of_additions int NOT NULL,
-      extra_ingredients TEXT NOT NULL
+      "recipeData" TEXT NOT NULL,
+      "yanFromSource" varchar(255),
+      "yanContribution" varchar(255) NOT NULL,
+      "nutrientData" TEXT NOT NULL,
+      advanced bool NOT NULL,
+      "nuteInfo" TEXT,
+      "primaryNotes" TEXT[],
+      "secondaryNotes" TEXT[]
     );
 
     CREATE TABLE ingredients (
@@ -115,18 +110,12 @@ async function createInitialUsers() {
     userPassword = await bcrypt.hash(process.env.USER_PASSWORD, 10);
   }
   const ADMIN_USER: User = {
-    firstName: "Admin",
-    lastName: "User",
-    username: "admin",
-    email: "contact@meadtools.com",
+    email: "larryreaux@gmail.com",
     password: adminPassword,
     role: "admin",
     googleId: null,
   };
   const USER: User = {
-    firstName: "User",
-    lastName: "User",
-    username: "user",
     email: "contact@meadtools.com",
     password: userPassword,
     role: "user",
@@ -143,32 +132,6 @@ async function createInitialUsers() {
 }
 
 async function createInitialRecipes() {
-  const ingredients = {
-    input1: {
-      name: "Honey",
-      weight: "3",
-      brix: 79.6,
-      volume: "0.254",
-      cat: "sugar",
-    },
-    input2: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input3: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input4: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input5: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input6: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input7: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input8: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input9: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input10: { name: "Honey", weight: 0, brix: 79.6, volume: 0, cat: "sugar" },
-    input11: {
-      name: "Water",
-      weight: "6.259",
-      brix: "0",
-      volume: ".75",
-      cat: "sugar",
-    },
-    input12: { name: "Water", weight: 0, brix: "0", volume: 0, cat: "sugar" },
-  };
   const yeastInfo = [
     {
       name: "ICV D47",
@@ -179,30 +142,106 @@ async function createInitialRecipes() {
     },
   ];
 
-  const extra_ingredients = {
-    input1: { name: "Opti-White", amount: "1.1", units: "g" },
-    input2: { name: "", amount: 0, units: "g" },
-    input3: { name: "", amount: 0, units: "g" },
-    input4: { name: "", amount: 0, units: "g" },
-    input5: { name: "", amount: 0, units: "g" },
-  };
-
   const TRADITIONAL_MEAD = {
     userId: 1,
     name: "Traditional Mead",
-    ingredients: JSON.stringify(ingredients),
-    units: "lbs",
-    volUnits: "gal",
-    rowCount: 0,
-    submitted: true,
-    yeastInfo: JSON.stringify(yeastInfo),
-    yeastBrand: "Lalvin",
-    nuteSchedule: "tosna",
-    numOfAdditions: 3,
-    extraIngredients: JSON.stringify(extra_ingredients),
+    recipeData: JSON.stringify({
+      ingredients: [
+        {
+          name: "water",
+          brix: 0,
+          details: [8.3451, 1],
+          secondary: false,
+          category: "water",
+        },
+        {
+          name: "water",
+          brix: 0,
+          details: [0, 0],
+          secondary: false,
+          category: "water",
+        },
+        {
+          name: "honey",
+          brix: 79.6,
+          details: [3, 0.2541],
+          secondary: false,
+          category: "sugar",
+        },
+        {
+          name: "honey",
+          brix: 79.6,
+          details: [0, 0],
+          secondary: false,
+          category: "sugar",
+        },
+      ],
+      OG: 1.084080896077745,
+      volume: 1.2541,
+      ABV: 11.62,
+      FG: 0.996,
+      offset: 0,
+      units: { weight: "lbs", volume: "gal" },
+      additives: [{ name: "Red Wine Tannin", amount: 3, unit: "g" }],
+      sorbate: -3.931989930416225,
+      sulfite: 0.416383201754386,
+    }),
+    yanFromSource: null,
+    yanContribution: JSON.stringify([40, 100, 210]),
+    nuteInfo: JSON.stringify({
+      ppmYan: [72, 50, 50],
+      totalGrams: [2.136045825, 2.37338425, 1.1301829761904763],
+      perAddition: [2.136045825, 2.37338425, 1.1301829761904763],
+      remainingYan: 0,
+      totalYan: 172,
+      gf: { gf: 3.14, gfWater: 62.75 },
+    }),
+    advanced: false,
+    nutrientData: JSON.stringify({
+      inputs: { volume: 1.2541, sg: 1.088, offset: 0, numberOfAdditions: 1 },
+      selected: {
+        yeastBrand: "Lalvin",
+        yeastStrain: "18-2007",
+        yeastDetails: {
+          id: 1,
+          brand: "Lalvin",
+          name: "18-2007",
+          nitrogen_requirement: "Low",
+          tolerance: "15",
+          low_temp: "50",
+          high_temp: "90",
+        },
+        n2Requirement: "Low",
+        volumeUnits: "gal",
+        schedule: "tbe",
+      },
+      maxGpl: {
+        tbe: { name: "TBE (All Three)", value: [0.45, 0.5, 0.96] },
+        tosna: { name: "TOSNA (Fermaid O Only)", value: [2.5, 0, 0] },
+        justK: { name: "Fermaid K Only", value: [0, 3, 0] },
+        dap: { name: "DAP Only", value: [0, 0, 1.5] },
+        oAndk: {
+          name: "Fermaid O & K",
+          value: [
+            [0.6, 0.81, 0],
+            [0.9, 0.81, 0],
+            [1.1, 1, 0],
+          ],
+        },
+        oAndDap: { name: "Fermaid O & DAP", value: [1, 0, 0.96] },
+        kAndDap: { name: "Fermaid K & DAP", value: [0, 1, 0.96] },
+      },
+      yanContribution: [40, 100, 210],
+      outputs: { targetYan: 172, yeastAmount: 2.51 },
+      primaryNotes: ["testing notes", "1.100, 12/12/12"],
+    }),
   };
 
-  const MEAD_TWO = { ...TRADITIONAL_MEAD, name: "TWO" };
+  const MEAD_TWO = {
+    ...TRADITIONAL_MEAD,
+    name: "TWO",
+    secondaryNotes: ["testing notes", ""],
+  };
 
   try {
     console.log("Creating initial recipes...");
@@ -276,8 +315,7 @@ async function testDB() {
 
     console.log("Calling updateUser on Admin...");
     const updatedUser = await updateUser(id, {
-      first_name: "Larry",
-      last_name: "Reaux",
+      email: "admin@meadtools.com",
     });
     console.log("Updated user:", updatedUser);
 
@@ -291,7 +329,7 @@ async function testDB() {
 
     console.log("Calling updateRecipe for recipeId 1");
     const updatedRecipe = await updateRecipe("1", {
-      row_count: 1,
+      yanFromSource: JSON.stringify([40, 100, 210]),
     });
     console.log("Updated recipe:", updatedRecipe);
 

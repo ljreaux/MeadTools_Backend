@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteYeast = exports.getYeastByBrand = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUserByUsername = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
+exports.deleteYeast = exports.getYeastByBrand = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
 exports.client = new pg_1.Client({
     connectionString: process.env.DATABASE_URL || "postgres://localhost:5432/meadtools-dev",
@@ -8,14 +8,14 @@ exports.client = new pg_1.Client({
         ? { rejectUnauthorized: false }
         : undefined,
 });
-async function createUser({ firstName = "", lastName = "", username = "", email, password = "", role = "user", googleId = "", }) {
+async function createUser({ email, password = "", role = "user", googleId = "", }) {
     try {
         const { rows: [user], } = await exports.client.query(`
-    INSERT INTO users (first_name, last_name, username, email, password, role, google_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO users (email, password, role, google_id)
+    VALUES ($1, $2, $3, $4)
     ON CONFLICT (email) DO NOTHING
     RETURNING *;
-    `, [firstName, lastName, username, email, password, role, googleId]);
+    `, [email, password, role, googleId]);
         return user;
     }
     catch (error) {
@@ -52,7 +52,7 @@ exports.updateUser = updateUser;
 async function getAllUsers() {
     try {
         const { rows: users } = await exports.client.query(`
-      SELECT id, first_name, last_name, username, email, role
+      SELECT id, email, role
       FROM users;
     `);
         return users;
@@ -76,20 +76,6 @@ async function getUser(id) {
     }
 }
 exports.getUser = getUser;
-async function getUserByUsername(username) {
-    try {
-        const { rows: [user], } = await exports.client.query(`
-      SELECT *
-      FROM users
-      WHERE username=$1
-    `, [username]);
-        return user;
-    }
-    catch (error) {
-        throw error;
-    }
-}
-exports.getUserByUsername = getUserByUsername;
 async function getUserByEmail(email) {
     try {
         const { rows: [user], } = await exports.client.query(`
@@ -170,25 +156,32 @@ async function getRecipeInfo(recipeId) {
     }
 }
 exports.getRecipeInfo = getRecipeInfo;
-async function createRecipe({ userId, name, ingredients, units, volUnits, rowCount, submitted, yeastInfo, yeastBrand, nuteSchedule, numOfAdditions, extraIngredients, }) {
+async function createRecipe({ userId, name, recipeData, yanFromSource, yanContribution, nutrientData, advanced, nuteInfo, primaryNotes = ["", ""], secondaryNotes = ["", ""], }) {
     try {
         const { rows: [recipe], } = await exports.client.query(`
-      INSERT INTO recipes (user_id, name, ingredients, units, vol_units, row_count, submitted, yeast_info, yeast_brand, nute_schedule, num_of_additions, extra_ingredients)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      INSERT INTO recipes (user_id,
+        name,
+        "recipeData",
+        "yanFromSource",
+        "yanContribution",
+        "nutrientData",
+        advanced,
+        "nuteInfo",
+       "primaryNotes",
+        "secondaryNotes")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *;
     `, [
             userId,
             name,
-            ingredients,
-            units,
-            volUnits,
-            rowCount,
-            submitted,
-            yeastInfo,
-            yeastBrand,
-            nuteSchedule,
-            numOfAdditions,
-            extraIngredients,
+            recipeData,
+            yanFromSource,
+            yanContribution,
+            nutrientData,
+            advanced,
+            nuteInfo,
+            primaryNotes,
+            secondaryNotes,
         ]);
         return recipe;
     }
