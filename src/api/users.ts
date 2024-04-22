@@ -91,10 +91,7 @@ usersRouter.get("/oauth", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-  res.redirect(
-    303,
-    `http://localhost:5173/login/?token=${userResponse?.token}`
-  );
+  res.redirect(303, `https://meadtools.comlogin/?token=${userResponse?.token}`);
 });
 
 usersRouter.get("/", async (req, res, next) => {
