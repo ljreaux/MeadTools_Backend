@@ -7,7 +7,7 @@ const express_1 = __importDefault(require("express"));
 const requestRouter = express_1.default.Router();
 const google_auth_library_1 = require("google-auth-library");
 requestRouter.post("/", async function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+    res.header("Access-Control-Allow-Origin", "https://meadtools.com");
     res.header("Referrer-Policy", "no-referrer-when-downgrade");
     const redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";
     const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUrl);
