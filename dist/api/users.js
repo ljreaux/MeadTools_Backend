@@ -106,7 +106,7 @@ usersRouter.post("/register", async (req, res, next) => {
         });
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
 usersRouter.post("/login", async (req, res, next) => {

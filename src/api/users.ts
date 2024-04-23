@@ -137,7 +137,7 @@ usersRouter.post("/register", async (req, res, next) => {
       email,
     });
   } catch (err) {
-    next(err);
+    res.send(err);
   }
 });
 
