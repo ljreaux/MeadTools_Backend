@@ -67,8 +67,6 @@ usersRouter.get("/oauth", async (req, res, next) => {
         email: userData.email,
       };
     } else {
-      const firstName = userData.given_name as string;
-      const lastName = userData.family_name as string;
       const email = userData.email as string;
       const googleId = (userData.sub as string) || null;
       const newUser = await createUser({
@@ -91,7 +89,10 @@ usersRouter.get("/oauth", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-  res.redirect(303, `https://meadtools.comlogin/?token=${userResponse?.token}`);
+  res.redirect(
+    303,
+    `${process.env.base_url}/login/?token=${userResponse?.token}`
+  );
 });
 
 usersRouter.get("/", async (req, res, next) => {
