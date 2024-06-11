@@ -19,7 +19,7 @@ import {
   getUserByEmail,
   getUserByGoogleId,
 } from "../db/index";
-import { requireUser } from "./utils";
+import { requireUser, requireAdmin } from "./utils";
 
 import jwt from "jsonwebtoken";
 
@@ -95,7 +95,7 @@ usersRouter.get("/oauth", async (req, res, next) => {
   );
 });
 
-usersRouter.get("/", async (req, res, next) => {
+usersRouter.get("/", requireAdmin, async (req, res, next) => {
   try {
     const users = await getAllUsers();
 
