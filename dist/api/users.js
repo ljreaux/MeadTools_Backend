@@ -68,7 +68,7 @@ usersRouter.get("/oauth", async (req, res, next) => {
     }
     res.redirect(303, `${process.env.base_url}/login/?token=${userResponse?.token}`);
 });
-usersRouter.get("/", async (req, res, next) => {
+usersRouter.get("/", utils_1.requireAdmin, async (req, res, next) => {
     try {
         const users = await (0, index_1.getAllUsers)();
         res.send({ users: users });
