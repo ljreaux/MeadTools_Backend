@@ -31,7 +31,7 @@ async function getUserData(access_token: string) {
   return data;
 }
 
-usersRouter.get("/oauth", async (req, res, next) => {
+usersRouter.get("/oauth", async (req, res) => {
   let { code } = req.query as RequestWithCode["query"];
   let userResponse;
 
@@ -87,7 +87,7 @@ usersRouter.get("/oauth", async (req, res, next) => {
       };
     }
   } catch (err) {
-    next(err);
+    res.send(err);
   }
   res.redirect(
     303,
@@ -95,13 +95,13 @@ usersRouter.get("/oauth", async (req, res, next) => {
   );
 });
 
-usersRouter.get("/", requireAdmin, async (req, res, next) => {
+usersRouter.get("/", requireAdmin, async (req, res) => {
   try {
     const users = await getAllUsers();
 
     res.send({ users: users });
   } catch (err) {
-    next(err);
+    res.send(err);
   }
 });
 usersRouter.post("/register", async (req, res, next) => {
@@ -175,14 +175,14 @@ usersRouter.post("/login", async (req, res, next) => {
       });
     }
   } catch (err) {
-    next(err);
+    res.send(err);
   }
 });
 
 usersRouter.get(
   "/accountInfo",
   requireUser,
-  async (req: UserAuthInfoRequest, res, next) => {
+  async (req: UserAuthInfoRequest, res) => {
     const { id } = req.user || { id: null };
     try {
       const me = await getUser(id);
@@ -191,7 +191,7 @@ usersRouter.get(
 
       res.send({ ...me, recipes });
     } catch (err) {
-      next(err);
+      res.send(err);
     }
   }
 );
@@ -199,7 +199,7 @@ usersRouter.get(
 usersRouter.patch(
   "/accountInfo",
   requireUser,
-  async (req: UserAuthInfoRequest, res, next) => {
+  async (req: UserAuthInfoRequest, res) => {
     const { id } = req.user || { id: null };
     const { password: hashed } = req.body;
 
@@ -211,7 +211,7 @@ usersRouter.patch(
       const updatedUser = await updateUser(id, { ...req.body });
       res.send({ updatedUser });
     } catch (err) {
-      next(err);
+      res.send(err);
     }
   }
 );

@@ -15,7 +15,7 @@ async function getUserData(access_token) {
     const data = await response.json();
     return data;
 }
-usersRouter.get("/oauth", async (req, res, next) => {
+usersRouter.get("/oauth", async (req, res) => {
     let { code } = req.query;
     let userResponse;
     try {
@@ -64,17 +64,17 @@ usersRouter.get("/oauth", async (req, res, next) => {
         }
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
     res.redirect(303, `${process.env.base_url}/login/?token=${userResponse?.token}`);
 });
-usersRouter.get("/", utils_1.requireAdmin, async (req, res, next) => {
+usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {
     try {
         const users = await (0, index_1.getAllUsers)();
         res.send({ users: users });
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
 usersRouter.post("/register", async (req, res, next) => {
@@ -145,10 +145,10 @@ usersRouter.post("/login", async (req, res, next) => {
         }
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
-usersRouter.get("/accountInfo", utils_1.requireUser, async (req, res, next) => {
+usersRouter.get("/accountInfo", utils_1.requireUser, async (req, res) => {
     const { id } = req.user || { id: null };
     try {
         const me = await (0, index_1.getUser)(id);
@@ -157,10 +157,10 @@ usersRouter.get("/accountInfo", utils_1.requireUser, async (req, res, next) => {
         res.send({ ...me, recipes });
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
-usersRouter.patch("/accountInfo", utils_1.requireUser, async (req, res, next) => {
+usersRouter.patch("/accountInfo", utils_1.requireUser, async (req, res) => {
     const { id } = req.user || { id: null };
     const { password: hashed } = req.body;
     try {
@@ -172,7 +172,7 @@ usersRouter.patch("/accountInfo", utils_1.requireUser, async (req, res, next) =>
         res.send({ updatedUser });
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
 exports.default = usersRouter;

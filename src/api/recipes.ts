@@ -16,34 +16,30 @@ recipesRouter.get("/", async (req, res) => {
   res.send({ recipes });
 });
 
-recipesRouter.post(
-  "/",
-  requireUser,
-  async (req: UserAuthInfoRequest, res, next) => {
-    console.log(req);
-    try {
-      const { id: userId } = req.user || { id: null };
-      const recipe = await createRecipe({ userId, ...req.body });
-      console.log(recipe);
-      res.send({ recipe });
-    } catch (err) {
-      console.log(err);
-      next(err);
-    }
+recipesRouter.post("/", requireUser, async (req: UserAuthInfoRequest, res) => {
+  console.log(req);
+  try {
+    const { id: userId } = req.user || { id: null };
+    const recipe = await createRecipe({ userId, ...req.body });
+    console.log(recipe);
+    res.send({ recipe });
+  } catch (err) {
+    console.log(err);
+    res.send(err);
   }
-);
+});
 
 recipesRouter.get(
   "/:id",
   requireUser,
-  async (req: UserAuthInfoRequest, res, next) => {
+  async (req: UserAuthInfoRequest, res) => {
     try {
       const { id: recipeId } = req.params;
       const recipe = await getRecipeInfo(recipeId);
 
       res.send({ recipe });
     } catch (err) {
-      next(err);
+      res.send(err);
     }
   }
 );
@@ -71,7 +67,7 @@ recipesRouter.patch(
         res.send({ updatedRecipe });
       }
     } catch (err) {
-      next(err);
+      res.send(err);
     }
   }
 );
@@ -100,7 +96,7 @@ recipesRouter.delete(
         });
       }
     } catch (err) {
-      next(err);
+      res.send(err);
     }
   }
 );

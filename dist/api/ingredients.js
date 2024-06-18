@@ -7,46 +7,46 @@ const express_1 = __importDefault(require("express"));
 const ingredientsRouter = express_1.default.Router();
 const index_1 = require("../db/index");
 const utils_1 = require("./utils");
-ingredientsRouter.get("/", async (req, res, next) => {
+ingredientsRouter.get("/", async (req, res) => {
     try {
         const ingredients = await (0, index_1.getAllIngredients)();
         res.send(ingredients);
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
-ingredientsRouter.post("/", utils_1.requireAdmin, async (req, res, next) => {
+ingredientsRouter.post("/", utils_1.requireAdmin, async (req, res) => {
     try {
         const { body } = req;
         const newIngredient = await (0, index_1.createIngredient)(body);
         res.send(newIngredient);
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
-ingredientsRouter.get("/category/:categoryName", async (req, res, next) => {
+ingredientsRouter.get("/category/:categoryName", async (req, res) => {
     try {
         const { categoryName } = req.params;
         const ingredients = await (0, index_1.getIngredientsByCategory)(categoryName);
         res.send(ingredients);
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
-ingredientsRouter.get("/:ingredientName", async (req, res, next) => {
+ingredientsRouter.get("/:ingredientName", async (req, res) => {
     try {
         const { ingredientName } = req.params;
         const ingredient = await (0, index_1.getIngredientByName)(ingredientName);
         res.send(ingredient);
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
-ingredientsRouter.patch("/:ingredientId", utils_1.requireAdmin, async (req, res, next) => {
+ingredientsRouter.patch("/:ingredientId", utils_1.requireAdmin, async (req, res) => {
     try {
         const { ingredientId: id } = req.params;
         const { body: fields } = req;
@@ -54,10 +54,10 @@ ingredientsRouter.patch("/:ingredientId", utils_1.requireAdmin, async (req, res,
         res.send(updatedIngredient);
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
-ingredientsRouter.delete("/:ingredientId", utils_1.requireAdmin, async (req, res, next) => {
+ingredientsRouter.delete("/:ingredientId", utils_1.requireAdmin, async (req, res) => {
     try {
         const { ingredientId: id } = req.params;
         const deletedIngredient = await (0, index_1.deleteIngredient)(id);
@@ -67,7 +67,7 @@ ingredientsRouter.delete("/:ingredientId", utils_1.requireAdmin, async (req, res
         });
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
 exports.default = ingredientsRouter;

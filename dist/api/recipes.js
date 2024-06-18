@@ -11,7 +11,7 @@ recipesRouter.get("/", async (req, res) => {
     const recipes = await (0, index_1.getAllRecipes)();
     res.send({ recipes });
 });
-recipesRouter.post("/", utils_1.requireUser, async (req, res, next) => {
+recipesRouter.post("/", utils_1.requireUser, async (req, res) => {
     console.log(req);
     try {
         const { id: userId } = req.user || { id: null };
@@ -21,17 +21,17 @@ recipesRouter.post("/", utils_1.requireUser, async (req, res, next) => {
     }
     catch (err) {
         console.log(err);
-        next(err);
+        res.send(err);
     }
 });
-recipesRouter.get("/:id", utils_1.requireUser, async (req, res, next) => {
+recipesRouter.get("/:id", utils_1.requireUser, async (req, res) => {
     try {
         const { id: recipeId } = req.params;
         const recipe = await (0, index_1.getRecipeInfo)(recipeId);
         res.send({ recipe });
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
 recipesRouter.patch("/:id", utils_1.requireUser, async (req, res, next) => {
@@ -54,7 +54,7 @@ recipesRouter.patch("/:id", utils_1.requireUser, async (req, res, next) => {
         }
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
 recipesRouter.delete("/:id", utils_1.requireUser, async (req, res, next) => {
@@ -78,7 +78,7 @@ recipesRouter.delete("/:id", utils_1.requireUser, async (req, res, next) => {
         }
     }
     catch (err) {
-        next(err);
+        res.send(err);
     }
 });
 exports.default = recipesRouter;
