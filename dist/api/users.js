@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const usersRouter = express_1.default.Router();
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const google_auth_library_1 = require("google-auth-library");
+const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 const index_1 = require("../db/index");
 const utils_1 = require("./utils");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -92,15 +93,20 @@ usersRouter.post("/register", async (req, res, next) => {
             email,
             password,
         });
-        let token;
-        if (process.env.JWT_SECRET)
-            token = jsonwebtoken_1.default.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+        let accessToken, refreshToken;
+        if (process.env.JWT_SECRET) {
+            accessToken = jsonwebtoken_1.default.sign({ id: user.id }, ACCESS_TOKEN_SECRET, {
                 expiresIn: "1w",
             });
+            refreshToken = jsonwebtoken_1.default.sign({ id: user.id }, REFRESH_TOKEN_SECRET, {
+                expiresIn: "2w",
+            });
+        }
         const { role } = newUser;
         res.send({
             message: "Thank you for signing up!",
-            token,
+            accessToken,
+            refreshToken,
             role,
             email,
         });
@@ -124,15 +130,17 @@ usersRouter.post("/login", async (req, res, next) => {
             auth = await bcrypt_1.default.compare(password, user.password);
         }
         if (user && auth) {
-            let token;
-            if (process.env.JWT_SECRET)
-                token = jsonwebtoken_1.default.sign({ id: user.id, email }, process.env.JWT_SECRET, {
-                    expiresIn: "1w",
-                });
+            const accessToken = jsonwebtoken_1.default.sign({ id: user.id }, ACCESS_TOKEN_SECRET, {
+                expiresIn: "1w",
+            });
+            const refreshToken = jsonwebtoken_1.default.sign({ id: user.id }, REFRESH_TOKEN_SECRET, {
+                expiresIn: "2w",
+            });
             const { role } = user;
             res.send({
                 message: "Successfully logged in!",
-                token,
+                accessToken,
+                refreshToken,
                 role,
                 email,
             });
@@ -148,10 +156,27 @@ usersRouter.post("/login", async (req, res, next) => {
         next({ name, message });
     }
 });
+usersRouter.post("/refresh", async (req, res, next) => {
+    const { email, refreshToken } = req.body;
+    const user = await (0, index_1.getUserByEmail)(email);
+    const isValid = (0, utils_1.verifyRefresh)(user.id, refreshToken);
+    try {
+        if (!isValid) {
+            next({ name: "InvalidTokenError", message: "Invalid refresh token" });
+        }
+        const accessToken = jsonwebtoken_1.default.sign({ id: user.id }, ACCESS_TOKEN_SECRET, {
+            expiresIn: "1w",
+        });
+        res.send({ success: true, accessToken });
+    }
+    catch ({ name, message }) {
+        next({ name, message });
+    }
+});
 usersRouter.get("/accountInfo", utils_1.requireUser, async (req, res, next) => {
     const { id } = req.user || { id: null };
+    const me = await (0, index_1.getUser)(id);
     try {
-        const me = await (0, index_1.getUser)(id);
         delete me.password;
         const recipes = await (0, index_1.getAllRecipesForUser)(id);
         res.send({ ...me, recipes });

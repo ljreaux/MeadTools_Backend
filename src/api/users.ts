@@ -3,6 +3,7 @@ const usersRouter = express.Router();
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import { UserAuthInfoRequest } from ".";
+const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 
 interface RequestWithCode extends Request {
   query: {
@@ -19,9 +20,10 @@ import {
   getUserByEmail,
   getUserByGoogleId,
 } from "../db/index";
-import { requireUser, requireAdmin } from "./utils";
+import { requireUser, requireAdmin, verifyRefresh } from "./utils";
 
 import jwt from "jsonwebtoken";
+import { access } from "fs";
 
 async function getUserData(access_token: string) {
   const response = await fetch(
@@ -122,17 +124,22 @@ usersRouter.post("/register", async (req, res, next) => {
       password,
     });
 
-    let token;
-    if (process.env.JWT_SECRET)
-      token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+    let accessToken, refreshToken;
+    if (process.env.JWT_SECRET) {
+      accessToken = jwt.sign({ id: user.id }, ACCESS_TOKEN_SECRET, {
         expiresIn: "1w",
       });
+      refreshToken = jwt.sign({ id: user.id }, REFRESH_TOKEN_SECRET, {
+        expiresIn: "2w",
+      });
+    }
 
     const { role } = newUser;
 
     res.send({
       message: "Thank you for signing up!",
-      token,
+      accessToken,
+      refreshToken,
       role,
       email,
     });
@@ -156,15 +163,17 @@ usersRouter.post("/login", async (req, res, next) => {
       auth = await bcrypt.compare(password, user.password);
     }
     if (user && auth) {
-      let token;
-      if (process.env.JWT_SECRET)
-        token = jwt.sign({ id: user.id, email }, process.env.JWT_SECRET, {
-          expiresIn: "1w",
-        });
+      const accessToken = jwt.sign({ id: user.id }, ACCESS_TOKEN_SECRET, {
+        expiresIn: "1w",
+      });
+      const refreshToken = jwt.sign({ id: user.id }, REFRESH_TOKEN_SECRET, {
+        expiresIn: "2w",
+      });
       const { role } = user;
       res.send({
         message: "Successfully logged in!",
-        token,
+        accessToken,
+        refreshToken,
         role,
         email,
       });
@@ -179,13 +188,30 @@ usersRouter.post("/login", async (req, res, next) => {
   }
 });
 
+usersRouter.post("/refresh", async (req, res, next) => {
+  const { email, refreshToken } = req.body;
+  const user = await getUserByEmail(email);
+  const isValid = verifyRefresh(user.id, refreshToken);
+  try {
+    if (!isValid) {
+      next({ name: "InvalidTokenError", message: "Invalid refresh token" });
+    }
+    const accessToken = jwt.sign({ id: user.id }, ACCESS_TOKEN_SECRET, {
+      expiresIn: "1w",
+    });
+    res.send({ success: true, accessToken });
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
+});
+
 usersRouter.get(
   "/accountInfo",
   requireUser,
   async (req: UserAuthInfoRequest, res, next) => {
     const { id } = req.user || { id: null };
+    const me = await getUser(id);
     try {
-      const me = await getUser(id);
       delete me.password;
       const recipes = await getAllRecipesForUser(id);
 

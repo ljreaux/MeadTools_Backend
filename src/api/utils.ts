@@ -1,5 +1,7 @@
 import { Response, NextFunction } from "express";
 import { UserAuthInfoRequest } from ".";
+import jwt, { JwtPayload } from "jsonwebtoken";
+const { REFRESH_TOKEN_SECRET = "" } = process.env;
 
 export function requireUser(
   req: UserAuthInfoRequest,
@@ -39,4 +41,14 @@ export function checkAdmin(
     return false;
   }
   return true;
+}
+
+export function verifyRefresh(id: string, token: string) {
+  try {
+    const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET) as JwtPayload;
+    return decoded.id === id;
+  } catch (error) {
+    // console.error(error);
+    return false;
+  }
 }
