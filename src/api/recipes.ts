@@ -16,30 +16,33 @@ recipesRouter.get("/", async (req, res) => {
   res.send({ recipes });
 });
 
-recipesRouter.post("/", requireUser, async (req: UserAuthInfoRequest, res) => {
-  console.log(req);
-  try {
-    const { id: userId } = req.user || { id: null };
-    const recipe = await createRecipe({ userId, ...req.body });
-    console.log(recipe);
-    res.send({ recipe });
-  } catch (err) {
-    console.log(err);
-    res.send(err);
+recipesRouter.post(
+  "/",
+  requireUser,
+  async (req: UserAuthInfoRequest, res, next) => {
+    console.log(req);
+    try {
+      const { id: userId } = req.user || { id: null };
+      const recipe = await createRecipe({ userId, ...req.body });
+      console.log(recipe);
+      res.send({ recipe });
+    } catch ({ name, message }) {
+      next({ name, message });
+    }
   }
-});
+);
 
 recipesRouter.get(
   "/:id",
   requireUser,
-  async (req: UserAuthInfoRequest, res) => {
+  async (req: UserAuthInfoRequest, res, next) => {
     try {
       const { id: recipeId } = req.params;
       const recipe = await getRecipeInfo(recipeId);
 
       res.send({ recipe });
-    } catch (err) {
-      res.send(err);
+    } catch ({ name, message }) {
+      next({ name, message });
     }
   }
 );
@@ -66,8 +69,8 @@ recipesRouter.patch(
         const updatedRecipe = await updateRecipe(id, fields);
         res.send({ updatedRecipe });
       }
-    } catch (err) {
-      res.send(err);
+    } catch ({ name, message }) {
+      next({ name, message });
     }
   }
 );
@@ -95,8 +98,8 @@ recipesRouter.delete(
           message: `${name} has been successfully deleted.`,
         });
       }
-    } catch (err) {
-      res.send(err);
+    } catch ({ name, message }) {
+      next({ name, message });
     }
   }
 );

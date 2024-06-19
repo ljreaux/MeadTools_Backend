@@ -1,9 +1,9 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
 
-const { PORT = 3000 } = process.env;
+const { PORT = 8080 } = process.env;
 const server: Express = express();
 
 server.use(cors());
@@ -13,6 +13,11 @@ server.use(bodyParser.json({ limit: "50mb" }));
 
 import apiRouter from "./api/index";
 server.use("/api", apiRouter);
+apiRouter.use(
+  (error: Error, req: Request, res: Response, next: NextFunction): void => {
+    res.send(error);
+  }
+);
 import { client } from "./db/index";
 client.connect();
 

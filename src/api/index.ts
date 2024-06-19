@@ -1,28 +1,28 @@
-import express, {Request } from "express";
+import express, { Request } from "express";
 const apiRouter = express.Router();
 import path from "path";
 
 import jwt from "jsonwebtoken";
 import { getUser } from "../db/index";
-const { JWT_SECRET } = process.env;
+const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 
 apiRouter.use(express.static(path.join(__dirname, "documentation")));
 
 interface JwtPayload {
-  id: string
+  id: string;
 }
 
 export interface UserAuthInfoRequest extends Request {
-  user?: { id: string, email: string, role: 'user' | 'admin' } 
+  user?: { id: string; email: string; role: "user" | "admin" };
 }
 
 apiRouter.use(async (req: UserAuthInfoRequest, res, next) => {
   const auth = req.header("Authorization");
   const token = auth?.split(" ")[1];
-  if (!auth || !token || !JWT_SECRET) next();
+  if (!auth || !token || !ACCESS_TOKEN_SECRET) next();
   else {
     try {
-      const { id } = jwt.verify(token, JWT_SECRET) as JwtPayload;
+      const { id } = jwt.verify(token, ACCESS_TOKEN_SECRET) as JwtPayload;
       if (id) {
         const { email, role } = await getUser(id);
         req.user = { id, email, role };
