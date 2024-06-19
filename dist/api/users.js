@@ -63,8 +63,8 @@ usersRouter.get("/oauth", async (req, res) => {
             };
         }
     }
-    catch (err) {
-        res.send(err);
+    catch ({ name, message }) {
+        res.send(message);
     }
     res.redirect(303, `${process.env.base_url}/login/?token=${userResponse?.token}`);
 });
@@ -73,8 +73,8 @@ usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {
         const users = await (0, index_1.getAllUsers)();
         res.send({ users: users });
     }
-    catch (err) {
-        res.send(err);
+    catch ({ name, message }) {
+        res.send(message);
     }
 });
 usersRouter.post("/register", async (req, res, next) => {
@@ -105,8 +105,8 @@ usersRouter.post("/register", async (req, res, next) => {
             email,
         });
     }
-    catch (err) {
-        res.send(err);
+    catch ({ name, message }) {
+        next({ name, message });
     }
 });
 usersRouter.post("/login", async (req, res, next) => {
@@ -144,11 +144,11 @@ usersRouter.post("/login", async (req, res, next) => {
             });
         }
     }
-    catch (err) {
-        res.send(err);
+    catch ({ name, message }) {
+        next({ name, message });
     }
 });
-usersRouter.get("/accountInfo", utils_1.requireUser, async (req, res) => {
+usersRouter.get("/accountInfo", utils_1.requireUser, async (req, res, next) => {
     const { id } = req.user || { id: null };
     try {
         const me = await (0, index_1.getUser)(id);
@@ -156,11 +156,11 @@ usersRouter.get("/accountInfo", utils_1.requireUser, async (req, res) => {
         const recipes = await (0, index_1.getAllRecipesForUser)(id);
         res.send({ ...me, recipes });
     }
-    catch (err) {
-        res.send(err);
+    catch ({ name, message }) {
+        next({ name, message });
     }
 });
-usersRouter.patch("/accountInfo", utils_1.requireUser, async (req, res) => {
+usersRouter.patch("/accountInfo", utils_1.requireUser, async (req, res, next) => {
     const { id } = req.user || { id: null };
     const { password: hashed } = req.body;
     try {
@@ -171,8 +171,8 @@ usersRouter.patch("/accountInfo", utils_1.requireUser, async (req, res) => {
         const updatedUser = await (0, index_1.updateUser)(id, { ...req.body });
         res.send({ updatedUser });
     }
-    catch (err) {
-        res.send(err);
+    catch ({ name, message }) {
+        next({ name, message });
     }
 });
 exports.default = usersRouter;

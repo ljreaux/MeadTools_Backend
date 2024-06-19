@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteYeast = exports.getYeastByBrand = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
 exports.client = new pg_1.Client({
-    connectionString: process.env.DATABASE_URL || "postgres://localhost:5432/meadtools-dev",
+    connectionString: process.env.DATABASE_URL || process.env.DEV_DATABASE_URL,
     ssl: process.env.NODE_ENV === "production"
         ? { rejectUnauthorized: false }
         : undefined,

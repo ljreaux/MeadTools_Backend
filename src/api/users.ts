@@ -86,8 +86,8 @@ usersRouter.get("/oauth", async (req, res) => {
         email: newUser.email,
       };
     }
-  } catch (err) {
-    res.send(err);
+  } catch ({ name, message }) {
+    res.send(message);
   }
   res.redirect(
     303,
@@ -100,8 +100,8 @@ usersRouter.get("/", requireAdmin, async (req, res) => {
     const users = await getAllUsers();
 
     res.send({ users: users });
-  } catch (err) {
-    res.send(err);
+  } catch ({ name, message }) {
+    res.send(message);
   }
 });
 usersRouter.post("/register", async (req, res, next) => {
@@ -136,8 +136,8 @@ usersRouter.post("/register", async (req, res, next) => {
       role,
       email,
     });
-  } catch (err) {
-    res.send(err);
+  } catch ({ name, message }) {
+    next({ name, message });
   }
 });
 
@@ -174,15 +174,15 @@ usersRouter.post("/login", async (req, res, next) => {
         message: "Invalid email or password",
       });
     }
-  } catch (err) {
-    res.send(err);
+  } catch ({ name, message }) {
+    next({ name, message });
   }
 });
 
 usersRouter.get(
   "/accountInfo",
   requireUser,
-  async (req: UserAuthInfoRequest, res) => {
+  async (req: UserAuthInfoRequest, res, next) => {
     const { id } = req.user || { id: null };
     try {
       const me = await getUser(id);
@@ -190,8 +190,8 @@ usersRouter.get(
       const recipes = await getAllRecipesForUser(id);
 
       res.send({ ...me, recipes });
-    } catch (err) {
-      res.send(err);
+    } catch ({ name, message }) {
+      next({ name, message });
     }
   }
 );
@@ -199,7 +199,7 @@ usersRouter.get(
 usersRouter.patch(
   "/accountInfo",
   requireUser,
-  async (req: UserAuthInfoRequest, res) => {
+  async (req: UserAuthInfoRequest, res, next) => {
     const { id } = req.user || { id: null };
     const { password: hashed } = req.body;
 
@@ -210,8 +210,8 @@ usersRouter.patch(
       }
       const updatedUser = await updateUser(id, { ...req.body });
       res.send({ updatedUser });
-    } catch (err) {
-      res.send(err);
+    } catch ({ name, message }) {
+      next({ name, message });
     }
   }
 );
