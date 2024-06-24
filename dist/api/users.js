@@ -81,6 +81,71 @@ usersRouter.get("/oauth", async (req, res) => {
     }
     res.redirect(303, `${process.env.base_url}/login/?token=${userResponse?.accessToken}`);
 });
+usersRouter.get("/oauth/mobile", async (req, res) => {
+    let { code } = req.query;
+    let userResponse;
+    try {
+        const redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";
+        const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUrl);
+        const { tokens } = await oAuth2Client.getToken(code);
+        oAuth2Client.setCredentials(tokens);
+        const user = oAuth2Client.credentials;
+        let userData = null;
+        if (user.access_token)
+            userData = await getUserData(user.access_token);
+        const userExists = (await (0, index_1.getUserByEmail)(userData?.email)) ||
+            (await (0, index_1.getUserByGoogleId)(userData?.sub));
+        if (userExists) {
+            let accessToken, refreshToken;
+            if (process.env.ACCESS_TOKEN_SECRET && process.env.REFRESH_TOKEN_SECRET) {
+                accessToken = jsonwebtoken_1.default.sign({ id: userExists.id }, ACCESS_TOKEN_SECRET, {
+                    expiresIn: "1w",
+                });
+                refreshToken = jsonwebtoken_1.default.sign({ id: userExists.id }, REFRESH_TOKEN_SECRET, {
+                    expiresIn: "2w",
+                });
+            }
+            const { role } = userExists;
+            userResponse = {
+                message: "Successfully logged in!",
+                accessToken,
+                refreshToken,
+                role,
+                email: userData.email,
+            };
+        }
+        else {
+            const email = userData.email;
+            const googleId = userData.sub || null;
+            const newUser = await (0, index_1.createUser)({
+                email,
+                googleId,
+            });
+            let accessToken, refreshToken;
+            if (newUser.id &&
+                process.env.ACCESS_TOKEN_SECRET &&
+                process.env.REFRESH_TOKEN_SECRET) {
+                accessToken = jsonwebtoken_1.default.sign({ id: newUser.id }, ACCESS_TOKEN_SECRET, {
+                    expiresIn: "1w",
+                });
+                refreshToken = jsonwebtoken_1.default.sign({ id: newUser.id }, REFRESH_TOKEN_SECRET, {
+                    expiresIn: "2w",
+                });
+            }
+            userResponse = {
+                message: "Thank you for signing up!",
+                accessToken,
+                refreshToken,
+                role: newUser.role,
+                email: newUser.email,
+            };
+        }
+    }
+    catch ({ name, message }) {
+        res.send(message);
+    }
+    res.redirect(303, `${process.env.MOBILE_URL}/login/?token=${userResponse?.accessToken}`);
+});
 usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {
     try {
         const users = await (0, index_1.getAllUsers)();
