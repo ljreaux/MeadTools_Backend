@@ -31,15 +31,20 @@ usersRouter.get("/oauth", async (req, res) => {
         const userExists = (await (0, index_1.getUserByEmail)(userData?.email)) ||
             (await (0, index_1.getUserByGoogleId)(userData?.sub));
         if (userExists) {
-            let token;
-            if (process.env.JWT_SECRET)
-                token = jsonwebtoken_1.default.sign({ id: userExists.id }, process.env.JWT_SECRET, {
+            let accessToken, refreshToken;
+            if (process.env.JWT_SECRET) {
+                accessToken = jsonwebtoken_1.default.sign({ id: userExists.id }, ACCESS_TOKEN_SECRET, {
                     expiresIn: "1w",
                 });
+                refreshToken = jsonwebtoken_1.default.sign({ id: userExists.id }, REFRESH_TOKEN_SECRET, {
+                    expiresIn: "2w",
+                });
+            }
             const { role } = userExists;
             userResponse = {
                 message: "Successfully logged in!",
-                token,
+                accessToken,
+                refreshToken,
                 role,
                 email: userData.email,
             };
@@ -51,14 +56,19 @@ usersRouter.get("/oauth", async (req, res) => {
                 email,
                 googleId,
             });
-            let token;
-            if (newUser.id && process.env.JWT_SECRET)
-                token = jsonwebtoken_1.default.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+            let accessToken, refreshToken;
+            if (newUser.id && process.env.JWT_SECRET) {
+                accessToken = jsonwebtoken_1.default.sign({ id: newUser.id }, ACCESS_TOKEN_SECRET, {
                     expiresIn: "1w",
                 });
+                refreshToken = jsonwebtoken_1.default.sign({ id: newUser.id }, REFRESH_TOKEN_SECRET, {
+                    expiresIn: "2w",
+                });
+            }
             userResponse = {
                 message: "Thank you for signing up!",
-                token,
+                accessToken,
+                refreshToken,
                 role: newUser.role,
                 email: newUser.email,
             };
@@ -67,7 +77,7 @@ usersRouter.get("/oauth", async (req, res) => {
     catch ({ name, message }) {
         res.send(message);
     }
-    res.redirect(303, `${process.env.base_url}/login/?token=${userResponse?.token}`);
+    res.redirect(303, `${process.env.base_url}/login/?token=${userResponse?.accessToken}`);
 });
 usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {
     try {
