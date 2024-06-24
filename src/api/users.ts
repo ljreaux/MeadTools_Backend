@@ -102,6 +102,7 @@ usersRouter.get("/oauth", async (req, res) => {
   } catch ({ name, message }) {
     res.send(message);
   }
+  console.log(userResponse);
   res.redirect(
     303,
     `${process.env.base_url}/login/?token=${userResponse?.accessToken}`
