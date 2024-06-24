@@ -57,7 +57,7 @@ usersRouter.get("/oauth", async (req, res) => {
 
     if (userExists) {
       let accessToken, refreshToken;
-      if (process.env.JWT_SECRET) {
+      if (process.env.ACCESS_TOKEN_SECRET && process.env.REFRESH_TOKEN_SECRET) {
         accessToken = jwt.sign({ id: userExists.id }, ACCESS_TOKEN_SECRET, {
           expiresIn: "1w",
         });
@@ -83,7 +83,11 @@ usersRouter.get("/oauth", async (req, res) => {
       });
 
       let accessToken, refreshToken;
-      if (newUser.id && process.env.JWT_SECRET) {
+      if (
+        newUser.id &&
+        process.env.ACCESS_TOKEN_SECRET &&
+        process.env.REFRESH_TOKEN_SECRET
+      ) {
         accessToken = jwt.sign({ id: newUser.id }, ACCESS_TOKEN_SECRET, {
           expiresIn: "1w",
         });
@@ -102,7 +106,6 @@ usersRouter.get("/oauth", async (req, res) => {
   } catch ({ name, message }) {
     res.send(message);
   }
-  console.log(userResponse);
   res.redirect(
     303,
     `${process.env.base_url}/login/?token=${userResponse?.accessToken}`

@@ -32,7 +32,7 @@ usersRouter.get("/oauth", async (req, res) => {
             (await (0, index_1.getUserByGoogleId)(userData?.sub));
         if (userExists) {
             let accessToken, refreshToken;
-            if (process.env.JWT_SECRET) {
+            if (process.env.ACCESS_TOKEN_SECRET && process.env.REFRESH_TOKEN_SECRET) {
                 accessToken = jsonwebtoken_1.default.sign({ id: userExists.id }, ACCESS_TOKEN_SECRET, {
                     expiresIn: "1w",
                 });
@@ -57,7 +57,9 @@ usersRouter.get("/oauth", async (req, res) => {
                 googleId,
             });
             let accessToken, refreshToken;
-            if (newUser.id && process.env.JWT_SECRET) {
+            if (newUser.id &&
+                process.env.ACCESS_TOKEN_SECRET &&
+                process.env.REFRESH_TOKEN_SECRET) {
                 accessToken = jsonwebtoken_1.default.sign({ id: newUser.id }, ACCESS_TOKEN_SECRET, {
                     expiresIn: "1w",
                 });
@@ -77,7 +79,6 @@ usersRouter.get("/oauth", async (req, res) => {
     catch ({ name, message }) {
         res.send(message);
     }
-    console.log(userResponse);
     res.redirect(303, `${process.env.base_url}/login/?token=${userResponse?.accessToken}`);
 });
 usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {
