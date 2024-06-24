@@ -56,15 +56,21 @@ usersRouter.get("/oauth", async (req, res) => {
       (await getUserByGoogleId(userData?.sub));
 
     if (userExists) {
-      let token;
-      if (process.env.JWT_SECRET)
-        token = jwt.sign({ id: userExists.id }, process.env.JWT_SECRET, {
+      let accessToken, refreshToken;
+      if (process.env.JWT_SECRET) {
+        accessToken = jwt.sign({ id: userExists.id }, ACCESS_TOKEN_SECRET, {
           expiresIn: "1w",
         });
+        refreshToken = jwt.sign({ id: userExists.id }, REFRESH_TOKEN_SECRET, {
+          expiresIn: "2w",
+        });
+      }
+
       const { role } = userExists;
       userResponse = {
         message: "Successfully logged in!",
-        token,
+        accessToken,
+        refreshToken,
         role,
         email: userData.email,
       };
@@ -76,14 +82,19 @@ usersRouter.get("/oauth", async (req, res) => {
         googleId,
       });
 
-      let token;
-      if (newUser.id && process.env.JWT_SECRET)
-        token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+      let accessToken, refreshToken;
+      if (newUser.id && process.env.JWT_SECRET) {
+        accessToken = jwt.sign({ id: newUser.id }, ACCESS_TOKEN_SECRET, {
           expiresIn: "1w",
         });
+        refreshToken = jwt.sign({ id: newUser.id }, REFRESH_TOKEN_SECRET, {
+          expiresIn: "2w",
+        });
+      }
       userResponse = {
         message: "Thank you for signing up!",
-        token,
+        accessToken,
+        refreshToken,
         role: newUser.role,
         email: newUser.email,
       };
@@ -93,7 +104,7 @@ usersRouter.get("/oauth", async (req, res) => {
   }
   res.redirect(
     303,
-    `${process.env.base_url}/login/?token=${userResponse?.token}`
+    `${process.env.base_url}/login/?token=${userResponse?.accessToken}`
   );
 });
 
