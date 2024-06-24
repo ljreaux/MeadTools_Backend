@@ -12,7 +12,6 @@ recipesRouter.get("/", async (req, res) => {
     res.send({ recipes });
 });
 recipesRouter.post("/", utils_1.requireUser, async (req, res, next) => {
-    console.log(req);
     try {
         const { id: userId } = req.user || { id: null };
         const recipe = await (0, index_1.createRecipe)({ userId, ...req.body });

@@ -35,7 +35,6 @@ async function getUserData(access_token: string) {
 
 usersRouter.get("/oauth", async (req, res) => {
   let { code } = req.query as RequestWithCode["query"];
-  console.log(req);
   let userResponse;
 
   try {

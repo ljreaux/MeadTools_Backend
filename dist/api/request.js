@@ -6,9 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const requestRouter = express_1.default.Router();
 const google_auth_library_1 = require("google-auth-library");
-requestRouter.post("/", async function (_, res) {
+requestRouter.post("/", async function (req, res) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Referrer-Policy", "no-referrer-when-downgrade");
+    let fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
+    console.log(fullUrl);
     const redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";
     const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUrl);
     const authorizeUrl = oAuth2Client.generateAuthUrl({

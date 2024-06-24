@@ -18,7 +18,6 @@ async function getUserData(access_token) {
 }
 usersRouter.get("/oauth", async (req, res) => {
     let { code } = req.query;
-    console.log(req);
     let userResponse;
     try {
         const redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";

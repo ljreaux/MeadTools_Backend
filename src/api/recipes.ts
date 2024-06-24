@@ -20,7 +20,6 @@ recipesRouter.post(
   "/",
   requireUser,
   async (req: UserAuthInfoRequest, res, next) => {
-    console.log(req);
     try {
       const { id: userId } = req.user || { id: null };
       const recipe = await createRecipe({ userId, ...req.body });
