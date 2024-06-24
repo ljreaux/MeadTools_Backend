@@ -116,7 +116,8 @@ usersRouter.get("/oauth/mobile", async (req, res) => {
   let userResponse;
 
   try {
-    const redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";
+    const redirectUrl =
+      "https://mead-tools-api.vercel.app/api/users/oauth/mobile";
 
     const oAuth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
