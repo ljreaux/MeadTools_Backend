@@ -144,7 +144,7 @@ usersRouter.get("/oauth/mobile", async (req, res) => {
     catch ({ name, message }) {
         res.send(message);
     }
-    res.redirect(301, `exp://192.168.1.213:8081/login/?token=${userResponse?.accessToken}`);
+    res.redirect(301, `exp://192.168.1.213:8081/login/?token=${userResponse?.accessToken}?refreshToken=${userResponse?.refreshToken}?email=${userResponse?.email}`);
 });
 usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {
     try {
