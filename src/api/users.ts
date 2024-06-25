@@ -3,7 +3,11 @@ const usersRouter = express.Router();
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import { UserAuthInfoRequest } from ".";
-const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
+const {
+  ACCESS_TOKEN_SECRET = "",
+  REFRESH_TOKEN_SECRET = "",
+  MOBILE_REDIRECT_URL,
+} = process.env;
 
 interface RequestWithCode extends Request {
   query: {
@@ -187,7 +191,7 @@ usersRouter.get("/oauth/mobile", async (req, res) => {
   }
   res.redirect(
     301,
-    `exp://192.168.1.213:8081/login/?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`
+    `${MOBILE_REDIRECT_URL}/?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`
   );
 });
 

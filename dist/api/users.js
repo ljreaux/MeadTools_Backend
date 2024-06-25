@@ -7,7 +7,7 @@ const express_1 = __importDefault(require("express"));
 const usersRouter = express_1.default.Router();
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const google_auth_library_1 = require("google-auth-library");
-const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
+const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "", MOBILE_REDIRECT_URL, } = process.env;
 const index_1 = require("../db/index");
 const utils_1 = require("./utils");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -144,7 +144,7 @@ usersRouter.get("/oauth/mobile", async (req, res) => {
     catch ({ name, message }) {
         res.send(message);
     }
-    res.redirect(301, `exp://192.168.1.213:8081/login/?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`);
+    res.redirect(301, `${MOBILE_REDIRECT_URL}/?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`);
 });
 usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {
     try {
