@@ -187,7 +187,7 @@ usersRouter.get("/oauth/mobile", async (req, res) => {
   }
   res.redirect(
     303,
-    `${process.env.MOBILE_URL}/login/?token=${userResponse?.accessToken}`
+    `exp://192.168.1.213:8081/login/?token=${userResponse?.accessToken}`
   );
 });
 
