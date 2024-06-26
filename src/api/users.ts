@@ -191,7 +191,7 @@ usersRouter.get("/oauth/mobile", async (req, res) => {
   }
   res.redirect(
     301,
-    `${MOBILE_REDIRECT_URL}/?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`
+    `${MOBILE_REDIRECT_URL}?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`
   );
 });
 
