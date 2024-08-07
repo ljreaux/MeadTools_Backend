@@ -48,7 +48,8 @@ async function createTables() {
       advanced bool NOT NULL,
       "nuteInfo" TEXT,
       "primaryNotes" TEXT[],
-      "secondaryNotes" TEXT[]
+      "secondaryNotes" TEXT[],
+      "private" bool NOT NULL DEFAULT false
     );
 
     CREATE TABLE ingredients (

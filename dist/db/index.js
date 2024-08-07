@@ -156,7 +156,7 @@ async function getRecipeInfo(recipeId) {
     }
 }
 exports.getRecipeInfo = getRecipeInfo;
-async function createRecipe({ userId, name, recipeData, yanFromSource, yanContribution, nutrientData, advanced, nuteInfo, primaryNotes = ["", ""], secondaryNotes = ["", ""], }) {
+async function createRecipe({ userId, name, recipeData, yanFromSource, yanContribution, nutrientData, advanced, nuteInfo, primaryNotes = ["", ""], secondaryNotes = ["", ""], privateRecipe = false }) {
     try {
         const { rows: [recipe], } = await exports.client.query(`
       INSERT INTO recipes (user_id,
@@ -168,8 +168,9 @@ async function createRecipe({ userId, name, recipeData, yanFromSource, yanContri
         advanced,
         "nuteInfo",
        "primaryNotes",
-        "secondaryNotes")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        "secondaryNotes",
+        private)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *;
     `, [
             userId,
@@ -182,6 +183,7 @@ async function createRecipe({ userId, name, recipeData, yanFromSource, yanContri
             nuteInfo,
             primaryNotes,
             secondaryNotes,
+            privateRecipe
         ]);
         return recipe;
     }

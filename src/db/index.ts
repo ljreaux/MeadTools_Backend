@@ -26,6 +26,7 @@ interface Recipe {
   nuteInfo: string;
   primaryNotes?: string[];
   secondaryNotes?: string[];
+  privateRecipe?: boolean;
 }
 
 interface Ingredient {
@@ -235,6 +236,7 @@ export async function createRecipe({
   nuteInfo,
   primaryNotes = ["", ""],
   secondaryNotes = ["", ""],
+  privateRecipe = false
 }: Recipe) {
   try {
     const {
@@ -250,8 +252,9 @@ export async function createRecipe({
         advanced,
         "nuteInfo",
        "primaryNotes",
-        "secondaryNotes")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        "secondaryNotes",
+        private)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *;
     `,
       [
@@ -265,6 +268,7 @@ export async function createRecipe({
         nuteInfo,
         primaryNotes,
         secondaryNotes,
+        privateRecipe
       ]
     );
     return recipe;

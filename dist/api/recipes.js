@@ -24,9 +24,18 @@ recipesRouter.post("/", utils_1.requireUser, async (req, res, next) => {
 });
 recipesRouter.get("/:id", utils_1.requireUser, async (req, res, next) => {
     try {
+        const { user } = req;
+        const admin = (0, utils_1.checkAdmin)(user);
         const { id: recipeId } = req.params;
         const recipe = await (0, index_1.getRecipeInfo)(recipeId);
-        res.send({ recipe });
+        console.log(recipe);
+        if (!recipe.private || admin || user?.id === recipe.user_id)
+            res.send({ recipe });
+        else
+            next({
+                name: "UnauthorizedError",
+                message: "You are not authorized to perform this action",
+            });
     }
     catch ({ name, message }) {
         next({ name, message });
@@ -40,7 +49,6 @@ recipesRouter.patch("/:id", utils_1.requireUser, async (req, res, next) => {
         const { id } = req.params;
         const { user_id: userId } = await (0, index_1.getRecipeInfo)(id);
         if (user && userId != user.id && !admin) {
-            console.log("in error");
             next({
                 name: "UnauthorizedError",
                 message: "You are not authorized to perform this action",
