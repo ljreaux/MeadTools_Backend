@@ -7,7 +7,7 @@ const express_1 = __importDefault(require("express"));
 const recipesRouter = express_1.default.Router();
 const index_1 = require("../db/index");
 const utils_1 = require("./utils");
-recipesRouter.get("/", async (req, res) => {
+recipesRouter.get("/", utils_1.requireAdmin, async (req, res) => {
     const recipes = await (0, index_1.getAllRecipes)();
     res.send({ recipes });
 });
