@@ -19,6 +19,7 @@ ingredientsRouter.get("/", async (req, res, next) => {
 ingredientsRouter.post("/", utils_1.requireAdmin, async (req, res, next) => {
     try {
         const { body } = req;
+        console.log(body);
         const newIngredient = await (0, index_1.createIngredient)(body);
         res.send(newIngredient);
     }
