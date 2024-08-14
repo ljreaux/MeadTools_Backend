@@ -542,6 +542,29 @@ export async function getYeastByName(name: string) {
   }
 }
 
+
+export async function getYeastById(id: string) {
+  try {
+    const {
+      rows: [yeast],
+    } = await client.query(
+      `
+      SELECT * FROM yeasts WHERE id=$1;
+    `,
+      [id]
+    );
+    if (!yeast)
+      throw {
+        name: "YeastNotFoundError",
+        message: "Yeast not found",
+      };
+    return yeast;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
 export async function getYeastByBrand(brand: string) {
   try {
     const { rows: yeasts } = await client.query(

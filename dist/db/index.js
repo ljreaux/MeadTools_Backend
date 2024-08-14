@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteYeast = exports.getYeastByBrand = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
+exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
 exports.client = new pg_1.Client({
     connectionString: process.env.DATABASE_URL || process.env.DEV_DATABASE_URL,
@@ -399,6 +399,23 @@ async function getYeastByName(name) {
     }
 }
 exports.getYeastByName = getYeastByName;
+async function getYeastById(id) {
+    try {
+        const { rows: [yeast], } = await exports.client.query(`
+      SELECT * FROM yeasts WHERE id=$1;
+    `, [id]);
+        if (!yeast)
+            throw {
+                name: "YeastNotFoundError",
+                message: "Yeast not found",
+            };
+        return yeast;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.getYeastById = getYeastById;
 async function getYeastByBrand(brand) {
     try {
         const { rows: yeasts } = await exports.client.query(`

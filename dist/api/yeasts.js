@@ -36,11 +36,21 @@ yeastsRouter.get("/brand/:brandName", async (req, res, next) => {
         next({ name, message });
     }
 });
-yeastsRouter.get("/:yeastName", async (req, res, next) => {
+yeastsRouter.get("/name/:yeastName", async (req, res, next) => {
     try {
         const { yeastName } = req.params;
         const yeast = await (0, db_1.getYeastByName)(yeastName);
         res.send(yeast);
+    }
+    catch ({ name, message }) {
+        next({ name, message });
+    }
+});
+yeastsRouter.get("/:id", async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const updatedYeast = await (0, db_1.getYeastById)(id);
+        res.send(updatedYeast);
     }
     catch ({ name, message }) {
         next({ name, message });

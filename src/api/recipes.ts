@@ -23,7 +23,7 @@ recipesRouter.post(
     try {
       const { id: userId } = req.user || { id: null };
       const recipe = await createRecipe({ userId, ...req.body });
-      console.log(recipe);
+
       res.send({ recipe });
     } catch ({ name, message }) {
       next({ name, message });
@@ -40,7 +40,7 @@ recipesRouter.get(
       const admin = checkAdmin(user);
       const { id: recipeId } = req.params;
       const recipe = await getRecipeInfo(recipeId);
-      console.log(recipe);
+
       if (!recipe.private || admin || user?.id === recipe.user_id)
         res.send({ recipe });
       else

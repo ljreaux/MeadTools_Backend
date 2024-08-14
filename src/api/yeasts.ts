@@ -7,6 +7,7 @@ import {
   createYeast,
   updateYeast,
   deleteYeast,
+  getYeastById,
 } from "../db";
 import { requireAdmin } from "./utils";
 
@@ -36,11 +37,20 @@ yeastsRouter.get("/brand/:brandName", async (req, res, next) => {
     next({ name, message });
   }
 });
-yeastsRouter.get("/:yeastName", async (req, res, next) => {
+yeastsRouter.get("/name/:yeastName", async (req, res, next) => {
   try {
     const { yeastName } = req.params;
     const yeast = await getYeastByName(yeastName);
     res.send(yeast);
+  } catch ({ name, message }) {
+    next({ name, message });
+  }
+});
+yeastsRouter.get("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updatedYeast = await getYeastById(id);
+    res.send(updatedYeast);
   } catch ({ name, message }) {
     next({ name, message });
   }
