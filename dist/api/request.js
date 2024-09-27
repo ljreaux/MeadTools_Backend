@@ -10,9 +10,10 @@ requestRouter.post("/", async function (req, res) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Referrer-Policy", "no-referrer-when-downgrade");
     let redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";
-    console.log(req.body);
     if (req.body.mobile)
         redirectUrl += "/mobile";
+    if (req.body.desktop)
+        redirectUrl += "/desktop";
     const oAuth2Client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, redirectUrl);
     const authorizeUrl = oAuth2Client.generateAuthUrl({
         access_type: "offline",

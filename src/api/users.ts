@@ -7,6 +7,7 @@ const {
   ACCESS_TOKEN_SECRET = "",
   REFRESH_TOKEN_SECRET = "",
   MOBILE_REDIRECT_URL,
+  DESKTOP_REDIRECT_URL,
 } = process.env;
 
 interface RequestWithCode extends Request {
@@ -192,6 +193,86 @@ usersRouter.get("/oauth/mobile", async (req, res) => {
   res.redirect(
     301,
     `${MOBILE_REDIRECT_URL}?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`
+  );
+});
+
+usersRouter.get("/oauth/desktop", async (req, res) => {
+  let { code } = req.query as RequestWithCode["query"];
+  let userResponse;
+
+  try {
+    const redirectUrl =
+      "https://mead-tools-api.vercel.app/api/users/oauth/mobile";
+
+    const oAuth2Client = new OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      redirectUrl
+    );
+    const { tokens } = await oAuth2Client.getToken(code);
+    oAuth2Client.setCredentials(tokens);
+    const user = oAuth2Client.credentials;
+    let userData = null;
+    if (user.access_token) userData = await getUserData(user.access_token);
+
+    const userExists =
+      (await getUserByEmail(userData?.email)) ||
+      (await getUserByGoogleId(userData?.sub));
+
+    if (userExists) {
+      let accessToken, refreshToken;
+      if (process.env.ACCESS_TOKEN_SECRET && process.env.REFRESH_TOKEN_SECRET) {
+        accessToken = jwt.sign({ id: userExists.id }, ACCESS_TOKEN_SECRET, {
+          expiresIn: "1w",
+        });
+        refreshToken = jwt.sign({ id: userExists.id }, REFRESH_TOKEN_SECRET, {
+          expiresIn: "2w",
+        });
+      }
+
+      const { role } = userExists;
+      userResponse = {
+        message: "Successfully logged in!",
+        accessToken,
+        refreshToken,
+        role,
+        email: userData.email,
+      };
+    } else {
+      const email = userData.email as string;
+      const googleId = (userData.sub as string) || null;
+      const newUser = await createUser({
+        email,
+        googleId,
+      });
+
+      let accessToken, refreshToken;
+      if (
+        newUser.id &&
+        process.env.ACCESS_TOKEN_SECRET &&
+        process.env.REFRESH_TOKEN_SECRET
+      ) {
+        accessToken = jwt.sign({ id: newUser.id }, ACCESS_TOKEN_SECRET, {
+          expiresIn: "1w",
+        });
+        refreshToken = jwt.sign({ id: newUser.id }, REFRESH_TOKEN_SECRET, {
+          expiresIn: "2w",
+        });
+      }
+      userResponse = {
+        message: "Thank you for signing up!",
+        accessToken,
+        refreshToken,
+        role: newUser.role,
+        email: newUser.email,
+      };
+    }
+  } catch ({ name, message }) {
+    res.send(message);
+  }
+  res.redirect(
+    301,
+    `${DESKTOP_REDIRECT_URL}?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`
   );
 });
 
