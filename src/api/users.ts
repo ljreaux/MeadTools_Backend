@@ -270,10 +270,11 @@ usersRouter.get("/oauth/desktop", async (req, res) => {
   } catch ({ name, message }) {
     res.send(message);
   }
-  console.log(DESKTOP_REDIRECT_URL, userResponse?.accessToken)
+  const redirectTo = `${DESKTOP_REDIRECT_URL}?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`
+  console.log(redirectTo)
   res.redirect(
     301,
-    `${DESKTOP_REDIRECT_URL}?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`
+    redirectTo
   );
 });
 

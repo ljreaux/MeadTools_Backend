@@ -209,8 +209,9 @@ usersRouter.get("/oauth/desktop", async (req, res) => {
     catch ({ name, message }) {
         res.send(message);
     }
-    console.log(DESKTOP_REDIRECT_URL, userResponse?.accessToken);
-    res.redirect(301, `${DESKTOP_REDIRECT_URL}?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`);
+    const redirectTo = `${DESKTOP_REDIRECT_URL}?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`;
+    console.log(redirectTo);
+    res.redirect(301, redirectTo);
 });
 usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {
     try {

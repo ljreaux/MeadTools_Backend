@@ -7,8 +7,6 @@ requestRouter.post("/", async function (req, res) {
   res.header("Referrer-Policy", "no-referrer-when-downgrade");
   let redirectUrl = "https://mead-tools-api.vercel.app/api/users/oauth";
 
-  console.log(req.body)
-
   if (req.body.mobile) redirectUrl += "/mobile";
   if (req.body.desktop) redirectUrl += "/desktop";
 
