@@ -2,15 +2,15 @@ import express from 'express';
 import { requireUser } from './utils';
 import { UserAuthInfoRequest } from '.';
 const iSpindelRouter = express.Router();
-import ShortUniqueId from 'short-unique-id'
-import { createHydrometerToken } from '../db';
+import { createHydrometerToken, getHydrometerToken } from '../db';
 
 iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
     const { id: userId } = req.user || { id: null };
-    const { body } = req;
-    console.log(body);
-    res.send(`Fetching deviceList for user ${userId}`);
+    let hydrometerToken;
+    if (userId) hydrometerToken = getHydrometerToken(userId);
+
+    res.send({ hydrometerToken, devices: [] });
   } catch (err) {
     next({ error: err.message })
   }

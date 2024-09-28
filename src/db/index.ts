@@ -627,3 +627,27 @@ export async function createHydrometerToken(userId: string) {
   }
 
 }
+
+export async function getHydrometerToken(userId: string) {
+  try {
+    const { rows: [user] } = await client.query(`
+    SELECT hydro_token
+    FROM users
+    WHERE id=$1;
+    `, [userId]);
+
+    if (!user) {
+      throw {
+        name: "UserNotFoundError",
+        message: "User not found",
+      };
+    }
+
+    return {
+      token: user.hydro_token,
+    };
+  }
+  catch (error) {
+    throw error;
+  }
+}

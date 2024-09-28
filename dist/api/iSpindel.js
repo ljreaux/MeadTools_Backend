@@ -10,9 +10,10 @@ const db_1 = require("../db");
 iSpindelRouter.get("/", utils_1.requireUser, async (req, res, next) => {
     try {
         const { id: userId } = req.user || { id: null };
-        const { body } = req;
-        console.log(body);
-        res.send(`Fetching deviceList for user ${userId}`);
+        let hydrometerToken;
+        if (userId)
+            hydrometerToken = (0, db_1.getHydrometerToken)(userId);
+        res.send({ hydrometerToken, devices: [] });
     }
     catch (err) {
         next({ error: err.message });
