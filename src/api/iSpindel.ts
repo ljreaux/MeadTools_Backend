@@ -64,8 +64,7 @@ iSpindelRouter.get("/:deviceId", requireUser, async (req: UserAuthInfoRequest, r
 iSpindelRouter.post("/register", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
     const { id: userId } = req.user || { id: null };
-    const { body } = req;
-    console.log(body);
+    console.log(userId)
     let token;
     if (userId) token = await createHydrometerToken(userId);
     else throw new Error('User ID not found')
