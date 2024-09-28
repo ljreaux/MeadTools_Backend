@@ -50,4 +50,6 @@ const ingredients_1 = __importDefault(require("./ingredients"));
 apiRouter.use("/ingredients", ingredients_1.default);
 const yeasts_1 = __importDefault(require("./yeasts"));
 apiRouter.use("/yeasts", yeasts_1.default);
+const iSpindel_1 = __importDefault(require("./iSpindel"));
+apiRouter.use("/iSpindel", iSpindel_1.default);
 exports.default = apiRouter;
