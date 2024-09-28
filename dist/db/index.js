@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
+exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
+const short_unique_id_1 = __importDefault(require("short-unique-id"));
 exports.client = new pg_1.Client({
     connectionString: process.env.DATABASE_URL || process.env.DEV_DATABASE_URL,
     ssl: process.env.NODE_ENV === "production"
@@ -447,3 +451,23 @@ async function deleteYeast(id) {
     }
 }
 exports.deleteYeast = deleteYeast;
+async function createHydrometerToken(userId) {
+    const { randomUUID } = new short_unique_id_1.default();
+    const token = randomUUID(10);
+    try {
+        const userToken = await exports.client.query(`
+      UPDATE users
+      SET hydro_token=$1
+      WHERE id=$2
+      RETURNING *;
+      `, [token, userId]);
+        console.log(userToken);
+        return {
+            token,
+        };
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.createHydrometerToken = createHydrometerToken;

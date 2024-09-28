@@ -1,4 +1,5 @@
 import { Client } from "pg";
+import ShortUniqueId from "short-unique-id";
 export const client = new Client({
   connectionString: process.env.DATABASE_URL || process.env.DEV_DATABASE_URL,
   ssl:
@@ -600,4 +601,27 @@ export async function deleteYeast(id: string) {
   } catch (error) {
     throw error;
   }
+}
+
+export async function createHydrometerToken(userId: string) {
+  const { randomUUID } = new ShortUniqueId();
+  const token = randomUUID(10);
+
+  try {
+    const userToken = await client.query(`
+      UPDATE users
+      SET hydro_token=$1
+      WHERE id=$2
+      RETURNING *;
+      `, [token, userId]);
+    console.log(userToken);
+
+    return {
+      token,
+    }
+
+  } catch (error) {
+    throw error;
+  }
+
 }

@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const utils_1 = require("./utils");
 const iSpindelRouter = express_1.default.Router();
-const short_unique_id_1 = __importDefault(require("short-unique-id"));
+const db_1 = require("../db");
 iSpindelRouter.get("/", utils_1.requireUser, async (req, res, next) => {
     try {
         const { id: userId } = req.user || { id: null };
@@ -69,9 +69,12 @@ iSpindelRouter.post("/register", utils_1.requireUser, async (req, res, next) => 
         const { id: userId } = req.user || { id: null };
         const { body } = req;
         console.log(body);
-        const { randomUUID } = new short_unique_id_1.default();
-        const token = randomUUID(10);
-        res.send(`Generating a new token for ${userId}. Your token is ${token}`);
+        let token;
+        if (userId)
+            token = await (0, db_1.createHydrometerToken)(userId);
+        else
+            throw new Error('User ID not found');
+        res.send(token);
     }
     catch (err) {
         next({ error: err.message });

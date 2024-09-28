@@ -3,6 +3,7 @@ import { requireUser } from './utils';
 import { UserAuthInfoRequest } from '.';
 const iSpindelRouter = express.Router();
 import ShortUniqueId from 'short-unique-id'
+import { createHydrometerToken } from '../db';
 
 iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
@@ -65,11 +66,11 @@ iSpindelRouter.post("/register", requireUser, async (req: UserAuthInfoRequest, r
     const { id: userId } = req.user || { id: null };
     const { body } = req;
     console.log(body);
+    let token;
+    if (userId) token = await createHydrometerToken(userId);
+    else throw new Error('User ID not found')
 
-    const { randomUUID } = new ShortUniqueId();
-    const token = randomUUID(10);
-
-    res.send(`Generating a new token for ${userId}. Your token is ${token}`);
+    res.send(token);
   } catch (err) {
     next({ error: err.message })
   }
