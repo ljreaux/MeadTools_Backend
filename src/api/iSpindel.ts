@@ -69,7 +69,7 @@ iSpindelRouter.post("/register", requireUser, async (req: UserAuthInfoRequest, r
     if (userId) token = await createHydrometerToken(userId);
     else throw new Error('User ID not found')
 
-    res.send(token);
+    res.send({ token: token.token });
   } catch (err) {
     next({ error: err.message })
   }
