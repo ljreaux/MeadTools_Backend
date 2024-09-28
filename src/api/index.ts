@@ -61,4 +61,7 @@ apiRouter.use("/ingredients", ingredientsRouter);
 import yeastsRouter from "./yeasts";
 apiRouter.use("/yeasts", yeastsRouter);
 
+import iSpindelRouter from "./iSpindel";
+apiRouter.use("/iSpindel", iSpindelRouter);
+
 export default apiRouter;
