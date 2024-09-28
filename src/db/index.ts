@@ -643,10 +643,8 @@ export async function getHydrometerToken(userId: string) {
       };
     }
 
-    console.log(user)
-    return {
-      token: user.hydro_token,
-    };
+    return user.hydro_token;
+
   }
   catch (error) {
     throw error;

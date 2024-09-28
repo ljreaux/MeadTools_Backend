@@ -12,7 +12,7 @@ iSpindelRouter.get("/", utils_1.requireUser, async (req, res, next) => {
         const { id: userId } = req.user || { id: null };
         let hydrometerToken;
         if (userId)
-            hydrometerToken = (0, db_1.getHydrometerToken)(userId);
+            hydrometerToken = await (0, db_1.getHydrometerToken)(userId);
         res.send({ hydrometerToken, devices: [] });
     }
     catch (err) {

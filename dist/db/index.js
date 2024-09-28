@@ -485,10 +485,7 @@ async function getHydrometerToken(userId) {
                 message: "User not found",
             };
         }
-        console.log(user);
-        return {
-            token: user.hydro_token,
-        };
+        return user.hydro_token;
     }
     catch (error) {
         throw error;
