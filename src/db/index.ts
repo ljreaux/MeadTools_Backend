@@ -643,6 +643,7 @@ export async function getHydrometerToken(userId: string) {
       };
     }
 
+    console.log(user)
     return {
       token: user.hydro_token,
     };
