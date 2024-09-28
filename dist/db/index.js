@@ -464,7 +464,7 @@ async function createHydrometerToken(userId) {
         return {
             userId: user.id,
             email: user.email,
-            token: user.token,
+            token: user.hydro_token,
         };
     }
     catch (error) {
