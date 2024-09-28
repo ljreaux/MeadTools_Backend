@@ -608,16 +608,18 @@ export async function createHydrometerToken(userId: string) {
   const token = randomUUID(10);
 
   try {
-    const userToken = await client.query(`
+    const { rows: [user] } = await client.query(`
       UPDATE users
       SET hydro_token=$1
       WHERE id=$2
       RETURNING *;
       `, [token, userId]);
-    console.log(userToken);
+
 
     return {
-      token,
+      userId: user.id,
+      email: user.email,
+      token: user.token,
     }
 
   } catch (error) {
