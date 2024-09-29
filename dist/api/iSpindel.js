@@ -68,7 +68,6 @@ iSpindelRouter.get("/:deviceId", utils_1.requireUser, async (req, res, next) => 
 iSpindelRouter.post("/register", utils_1.requireUser, async (req, res, next) => {
     try {
         const { id: userId } = req.user || { id: null };
-        console.log(userId);
         let token;
         if (userId)
             token = await (0, db_1.createHydrometerToken)(userId);
