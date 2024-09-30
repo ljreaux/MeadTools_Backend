@@ -9,7 +9,8 @@ const path_1 = __importDefault(require("path"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const index_1 = require("../db/index");
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
-apiRouter.use(express_1.default.static(path_1.default.join(__dirname, "docs")));
+const buildPath = path_1.default.join(__dirname, "docs");
+apiRouter.use(express_1.default.static(buildPath));
 apiRouter.use(async (req, res, next) => {
     const auth = req.header("Authorization");
     const token = auth?.split(" ")[1];
@@ -52,4 +53,7 @@ const yeasts_1 = __importDefault(require("./yeasts"));
 apiRouter.use("/yeasts", yeasts_1.default);
 const iSpindel_1 = __importDefault(require("./iSpindel"));
 apiRouter.use("/iSpindel", iSpindel_1.default);
+apiRouter.use("(/*)", async (req, res) => {
+    res.sendFile(path_1.default.join(buildPath, 'index.html'));
+});
 exports.default = apiRouter;
