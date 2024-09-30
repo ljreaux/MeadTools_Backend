@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import { getUser } from "../db/index";
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 
-apiRouter.use(express.static(path.join(__dirname, 'docs')));
+apiRouter.use(express.static(path.join(__dirname, "docs")));
 
 interface JwtPayload {
   id: string;
