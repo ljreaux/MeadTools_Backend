@@ -429,9 +429,9 @@ export async function getIngredientByName(name: string) {
       rows: [ingredient],
     } = await client.query(
       `
-      SELECT * FROM ingredients WHERE name=$1;
+      SELECT * FROM ingredients WHERE UPPER(name)=$1;
     `,
-      [name]
+      [name.toUpperCase()]
     );
     if (!ingredient)
       throw {

@@ -315,8 +315,8 @@ exports.getIngredientsByCategory = getIngredientsByCategory;
 async function getIngredientByName(name) {
     try {
         const { rows: [ingredient], } = await exports.client.query(`
-      SELECT * FROM ingredients WHERE name=$1;
-    `, [name]);
+      SELECT * FROM ingredients WHERE UPPER(name)=$1;
+    `, [name.toUpperCase()]);
         if (!ingredient)
             throw {
                 name: "IngredientNotFoundError",
