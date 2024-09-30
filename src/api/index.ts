@@ -67,7 +67,7 @@ import iSpindelRouter from "./iSpindel";
 
 apiRouter.use("/iSpindel", iSpindelRouter);
 
-apiRouter.use("(/*)", async (req, res) => {
+apiRouter.use("*", async (req, res) => {
   res.sendFile(path.join(buildPath, 'index.html'));
 })
 export default apiRouter;

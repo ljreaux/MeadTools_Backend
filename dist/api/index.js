@@ -53,7 +53,7 @@ const yeasts_1 = __importDefault(require("./yeasts"));
 apiRouter.use("/yeasts", yeasts_1.default);
 const iSpindel_1 = __importDefault(require("./iSpindel"));
 apiRouter.use("/iSpindel", iSpindel_1.default);
-apiRouter.use("(/*)", async (req, res) => {
+apiRouter.use("*", async (req, res) => {
     res.sendFile(path_1.default.join(buildPath, 'index.html'));
 });
 exports.default = apiRouter;
