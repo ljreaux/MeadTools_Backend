@@ -6,11 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const markdown_it_1 = __importDefault(require("markdown-it"));
 const gray_matter_1 = __importDefault(require("gray-matter"));
+const app = (0, express_1.default)();
 const apiRouter = express_1.default.Router();
 const path_1 = __importDefault(require("path"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const index_1 = require("../db/index");
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
+app.set("views", (path_1.default.join(__dirname, "docs")));
+app.set('view engine', 'ejs');
 apiRouter.get('/', (_, res) => {
     const md = (0, markdown_it_1.default)();
     const docs = gray_matter_1.default.read(path_1.default.join(__dirname, "docs/docs.md"));
