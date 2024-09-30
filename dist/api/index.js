@@ -4,17 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const app = (0, express_1.default)();
 const apiRouter = express_1.default.Router();
 const path_1 = __importDefault(require("path"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const index_1 = require("../db/index");
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
-app.set("views", (path_1.default.join(__dirname, "docs")));
-app.set('view engine', 'ejs');
-apiRouter.get('/', (_, res) => {
-    res.send('Welcome');
-});
+apiRouter.use(express_1.default.static(path_1.default.join(__dirname, 'docs')));
 apiRouter.use(async (req, res, next) => {
     const auth = req.header("Authorization");
     const token = auth?.split(" ")[1];

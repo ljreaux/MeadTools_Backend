@@ -1,5 +1,4 @@
 import express, { Request } from "express";
-const app = express()
 const apiRouter = express.Router();
 import path from "path";
 
@@ -7,12 +6,7 @@ import jwt from "jsonwebtoken";
 import { getUser } from "../db/index";
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 
-app.set("views", (path.join(__dirname, "docs")))
-app.set('view engine', 'ejs')
-
-apiRouter.get('/', (_, res) => {
-  res.send('Welcome')
-})
+apiRouter.use(express.static(path.join(__dirname, 'docs')));
 
 interface JwtPayload {
   id: string;
