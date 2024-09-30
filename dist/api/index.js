@@ -5,11 +5,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const apiRouter = express_1.default.Router();
+const marked_1 = __importDefault(require("marked"));
 const path_1 = __importDefault(require("path"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const index_1 = require("../db/index");
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
-apiRouter.use(express_1.default.static(path_1.default.join(__dirname, "docs")));
+apiRouter.get('/', (_, res) => {
+    const docs = path_1.default.join(__dirname, "docs/docs.md");
+    (0, fs_1.readFile)(docs, 'utf-8', (err, data) => {
+        if (err)
+            return res.send('File not found');
+        const html = marked_1.default.parse(data.toString());
+        res.send(html);
+    });
+});
 apiRouter.use(async (req, res, next) => {
     const auth = req.header("Authorization");
     const token = auth?.split(" ")[1];
@@ -51,5 +60,6 @@ apiRouter.use("/ingredients", ingredients_1.default);
 const yeasts_1 = __importDefault(require("./yeasts"));
 apiRouter.use("/yeasts", yeasts_1.default);
 const iSpindel_1 = __importDefault(require("./iSpindel"));
+const fs_1 = require("fs");
 apiRouter.use("/iSpindel", iSpindel_1.default);
 exports.default = apiRouter;

@@ -1,12 +1,20 @@
 import express, { Request } from "express";
 const apiRouter = express.Router();
+import marked from "marked";
 import path from "path";
 
 import jwt from "jsonwebtoken";
 import { getUser } from "../db/index";
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 
-apiRouter.use(express.static(path.join(__dirname, "docs")));
+apiRouter.get('/', (_, res) => {
+  const docs = path.join(__dirname, "docs/docs.md");
+  readFile(docs, 'utf-8', (err, data) => {
+    if (err) return res.send('File not found');
+    const html = marked.parse(data.toString());
+    res.send(html)
+  })
+})
 
 interface JwtPayload {
   id: string;
@@ -62,6 +70,7 @@ import yeastsRouter from "./yeasts";
 apiRouter.use("/yeasts", yeastsRouter);
 
 import iSpindelRouter from "./iSpindel";
+import { readFile } from "fs";
 apiRouter.use("/iSpindel", iSpindelRouter);
 
 export default apiRouter;
