@@ -1,6 +1,4 @@
 import express, { Request } from "express";
-import markdownit from "markdown-it"
-import matter from 'gray-matter'
 const app = express()
 const apiRouter = express.Router();
 import path from "path";
@@ -13,17 +11,7 @@ app.set("views", (path.join(__dirname, "docs")))
 app.set('view engine', 'ejs')
 
 apiRouter.get('/', (_, res) => {
-  const md = markdownit();
-  const docs = matter.read(path.join(__dirname, "docs/docs.md"));
-
-  const result = md.render(docs.content);
-
-  res.render("index", {
-    post: result,
-    title: docs.data.title,
-    description: docs.data.description,
-    image: docs.data.image,
-  })
+  res.send('Welcome')
 })
 
 interface JwtPayload {
