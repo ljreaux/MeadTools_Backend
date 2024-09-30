@@ -1,6 +1,7 @@
 import express, { Request } from "express";
+import markdownit from "markdown-it"
+import matter from 'gray-matter'
 const apiRouter = express.Router();
-import marked from "marked";
 import path from "path";
 
 import jwt from "jsonwebtoken";
@@ -8,11 +9,16 @@ import { getUser } from "../db/index";
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 
 apiRouter.get('/', (_, res) => {
-  const docs = path.join(__dirname, "docs/docs.md");
-  readFile(docs, 'utf-8', (err, data) => {
-    if (err) return res.send('File not found');
-    const html = marked.parse(data.toString());
-    res.send(html)
+  const md = markdownit();
+  const docs = matter.read(path.join(__dirname, "docs/docs.md"));
+
+  const result = md.render(docs.content);
+
+  res.render("index", {
+    post: result,
+    title: docs.data.title,
+    description: docs.data.description,
+    image: docs.data.image,
   })
 })
 
