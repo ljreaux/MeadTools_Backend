@@ -1,4 +1,7 @@
 import express, { Request } from "express";
+import markdownit from "markdown-it"
+import matter from 'gray-matter'
+const app = express()
 const apiRouter = express.Router();
 import path from "path";
 
@@ -6,7 +9,22 @@ import jwt from "jsonwebtoken";
 import { getUser } from "../db/index";
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 
-apiRouter.use(express.static(path.join(__dirname, "docs")));
+app.set("views", (path.join(__dirname, "docs")))
+app.set('view engine', 'ejs')
+
+apiRouter.get('/', (_, res) => {
+  const md = markdownit();
+  const docs = matter.read(path.join(__dirname, "docs/docs.md"));
+
+  const result = md.render(docs.content);
+
+  res.render("index", {
+    post: result,
+    title: docs.data.title,
+    description: docs.data.description,
+    image: docs.data.image,
+  })
+})
 
 interface JwtPayload {
   id: string;
@@ -62,6 +80,7 @@ import yeastsRouter from "./yeasts";
 apiRouter.use("/yeasts", yeastsRouter);
 
 import iSpindelRouter from "./iSpindel";
+import { readFile } from "fs";
 apiRouter.use("/iSpindel", iSpindelRouter);
 
 export default apiRouter;
