@@ -9,7 +9,7 @@ const path_1 = __importDefault(require("path"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const index_1 = require("../db/index");
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
-apiRouter.use(express_1.default.static(path_1.default.join(__dirname, "documentation")));
+apiRouter.use(express_1.default.static(path_1.default.join(__dirname, "docs")));
 apiRouter.use(async (req, res, next) => {
     const auth = req.header("Authorization");
     const token = auth?.split(" ")[1];
