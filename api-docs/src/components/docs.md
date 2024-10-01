@@ -20,6 +20,8 @@ This api serves as the backend for MeadTools and MeadTools Mobile. It was create
       - [POST /api/ingredients](#post-apiingredients)
       - [GET /api/ingredients/category/_:categoryName_](#get-apiingredientscategorycategoryname)
       - [GET /api/ingredients/_:ingredientName_](#get-apiingredientsingredientname)
+      - [PATCH /api/ingredients/_:ingredientId_](#patch-apiingredientsingredientid)
+      - [DELETE /api/ingredients/_:ingredientId_](#delete-apiingredientsingredientid)
 
 ## API Routes
 
@@ -48,7 +50,7 @@ Admin only routes are noted with Red Heading color.
 
 - Allows admin to add new ingredient
 
-```ts title="Request Parameters"
+```typescript title="Request Parameters"
 {
   name: string,
   sugarContent: number,
@@ -125,4 +127,36 @@ honey, brown sugar, onion, ...
 }
 ```
 
-I'm adding new content because I think Vercel's cache is screwing up the css.
+#### <span style="color: red">PATCH /api/ingredients/_:ingredientId_</span>
+
+- Allows admin to edit ingredients
+
+```typescript title="Request Parameters"
+{
+  name: string;
+  sugar_content: number;
+  water_content: number;
+  category: string;
+}
+```
+
+```json title="Sample Response"
+{
+  "id": 6,
+  "name": "Edited Ingredient",
+  "sugar_content": "11.58",
+  "water_content": "84.6",
+  "category": "fruit"
+}
+```
+
+#### <span style="color: red">DELETE /api/ingredients/_:ingredientId_</span>
+
+- Allows admin to delete ingredients
+
+```json title="Sample Response"
+{
+  "name": "Success",
+  "message": "Sample Ingredient has been deleted"
+}
+```
