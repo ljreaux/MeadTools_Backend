@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npx tsc && cd api-docs && npm run build",
     "start": "node dist/index.js",
-    "start:dev": "npx nodemon src/index.ts"
+    "start:dev": "npx nodemon backend/index.ts"
   },
   "pre-commit": [
     "ts.check",

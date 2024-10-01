@@ -23,5 +23,5 @@ server.use("*", (req, res) => {
     res.redirect("/api/");
 });
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
