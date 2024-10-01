@@ -1,0 +1,21 @@
+---
+import * as docs from '../components/docs.md'
+const {Content: Docs} = docs;
+
+import "../global.css"
+
+---
+
+<html lang="en">
+	<meta>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/png" href="/favicon.png" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+    <meta name="description" content={docs.frontmatter.description}>
+		<title>{docs.frontmatter.title}</title>
+	</head>
+	<body>
+		<Docs/>
+	</body>
+</html>
