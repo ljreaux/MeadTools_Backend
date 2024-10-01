@@ -124,5 +124,3 @@ honey, brown sugar, onion, ...
   "message": "Ingredient not found"
 }
 ```
-
-making a change to test the new project structure
