@@ -2,7 +2,7 @@ import express from 'express';
 import { requireUser } from './utils';
 import { UserAuthInfoRequest } from '.';
 const iSpindelRouter = express.Router();
-import { createHydrometerToken, getHydrometerToken } from '../db';
+import { calcGravity, createHydrometerToken, createLog, getHydrometerToken, registerDevice, updateBrewGravity, verifyToken } from '../db';
 
 iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
@@ -19,8 +19,27 @@ iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next)
 iSpindelRouter.post("/", async (req, res, next) => {
   try {
     const { body } = req;
-    console.log(body);
-    res.send("iSpindel recipe created successfully!");
+    const userId = await verifyToken(body.token);
+    if (!userId) next({ message: "Token invalid." });
+
+    const device = await registerDevice({ userId, device_name: body.name })
+
+    const { coefficients, brew_id } = device;
+    let calculated_gravity = null;
+    if (!!coefficients.length) calculated_gravity = calcGravity(coefficients, body.angle);
+    const gravity = calculated_gravity ?? body.gravity;
+
+    if (!!brew_id) await updateBrewGravity(brew_id, gravity);
+
+    const data = {
+      ...body,
+      calculated_gravity,
+      brew_id,
+      device_id: device.id,
+    }
+
+    const log = await createLog(data);
+    res.send(log);
   } catch (err) {
     next({ error: err.message })
   }
@@ -67,7 +86,7 @@ iSpindelRouter.post("/register", requireUser, async (req: UserAuthInfoRequest, r
 
     let token;
     if (userId) token = await createHydrometerToken(userId);
-    else throw new Error('User ID not found')
+    else throw new Error('User ID not found');
 
     res.send({ token: token.token });
   } catch (err) {

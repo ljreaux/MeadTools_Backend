@@ -22,8 +22,25 @@ iSpindelRouter.get("/", utils_1.requireUser, async (req, res, next) => {
 iSpindelRouter.post("/", async (req, res, next) => {
     try {
         const { body } = req;
-        console.log(body);
-        res.send("iSpindel recipe created successfully!");
+        const userId = await (0, db_1.verifyToken)(body.token);
+        if (!userId)
+            next({ message: "Token invalid." });
+        const device = await (0, db_1.registerDevice)({ userId, device_name: body.name });
+        const { coefficients, brew_id } = device;
+        let calculated_gravity = null;
+        if (!!coefficients.length)
+            calculated_gravity = (0, db_1.calcGravity)(coefficients, body.angle);
+        const gravity = calculated_gravity ?? body.gravity;
+        if (!!brew_id)
+            await (0, db_1.updateBrewGravity)(brew_id, gravity);
+        const data = {
+            ...body,
+            calculated_gravity,
+            brew_id,
+            device_id: device.id,
+        };
+        const log = await (0, db_1.createLog)(data);
+        res.send(log);
     }
     catch (err) {
         next({ error: err.message });

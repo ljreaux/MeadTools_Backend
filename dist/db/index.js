@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
+exports.createLog = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
 const short_unique_id_1 = __importDefault(require("short-unique-id"));
 exports.client = new pg_1.Client({
@@ -294,7 +294,6 @@ async function getIngredient(id) {
 }
 exports.getIngredient = getIngredient;
 async function getIngredientsByCategory(cat) {
-    console.log(typeof cat);
     try {
         const { rows: ingredients } = await exports.client.query(`
      SELECT * FROM ingredients
@@ -492,3 +491,85 @@ async function getHydrometerToken(userId) {
     }
 }
 exports.getHydrometerToken = getHydrometerToken;
+async function verifyToken(token) {
+    try {
+        if (!token)
+            throw {
+                name: "TokenNotFoundError",
+                message: "Token not found",
+            };
+        const { rows: [userId] } = await exports.client.query(`
+      SELECT id
+      FROM users
+      WHERE hydro_token=$1;
+      `, [token]);
+        if (!userId) {
+            throw {
+                name: "UserNotFoundError",
+                message: "User not found",
+            };
+        }
+        return userId.id;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.verifyToken = verifyToken;
+async function registerDevice({ device_name, userId, }) {
+    try {
+        const { rows: found } = await exports.client.query(`
+      SELECT *
+      FROM devices
+      WHERE user_id=$1 AND device_name=$2;
+      `, [userId, device_name]);
+        const isRegistered = found.length > 0;
+        if (isRegistered)
+            return found[0];
+        const { rows: [device] } = await exports.client.query(`
+      INSERT INTO devices (device_name, user_id)
+      VALUES ($1, $2)
+      ON CONFLICT DO NOTHING
+      RETURNING *;
+      `, [device_name, userId,]);
+        return device;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.registerDevice = registerDevice;
+function calcGravity([a, b, c, d], angle) {
+    return a * Math.pow(angle, 3) + b * Math.pow(angle, 2) + c * angle + d;
+}
+exports.calcGravity = calcGravity;
+async function updateBrewGravity(brewId, gravity) {
+    try {
+        const { rows: [brew] } = await exports.client.query(`
+  UPDATE devices 
+  SET gravity=$1
+  WHERE brew_id=$2
+  RETURNING *;
+  `, [gravity, brewId]);
+        return brew;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.updateBrewGravity = updateBrewGravity;
+async function createLog(log) {
+    try {
+        const { rows: [newLog] } = await exports.client.query(`
+    INSERT INTO logs (brew_id, device_id, angle, temperature, temp_units, battery, gravity, interval, calculated_gravity)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING *;
+    `, [log.brew_id, log.device_id, log.angle, log.temperature, log.temp_units, log.battery, log.gravity, log.interval, log.calculated_gravity]);
+        console.log(newLog);
+        return newLog;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.createLog = createLog;

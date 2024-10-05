@@ -46,6 +46,20 @@ export interface Yeast {
   highTemp: number;
 }
 
+export type LogType = {
+  id: string;
+  brew_id: string | null;
+  device_id: string;
+  angle: number;
+  temperature: number;
+  temp_units: "C" | "F";
+  battery: number;
+  gravity: number;
+  interval: number;
+  dateTime: Date;
+  calculated_gravity: number | null;
+};
+
 export async function createUser({
   email,
   password = "",
@@ -403,7 +417,7 @@ export async function getIngredient(id: string) {
 }
 
 export async function getIngredientsByCategory(cat: string) {
-  console.log(typeof cat);
+
   try {
     const { rows: ingredients } = await client.query(
       `
@@ -645,6 +659,96 @@ export async function getHydrometerToken(userId: string) {
 
     return user.hydro_token;
 
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+export async function verifyToken(token: string | undefined) {
+  try {
+    if (!token) throw {
+      name: "TokenNotFoundError",
+      message: "Token not found",
+    };
+
+    const { rows: [userId] } = await client.query(`
+      SELECT id
+      FROM users
+      WHERE hydro_token=$1;
+      `, [token]);
+
+    if (!userId) {
+      throw {
+        name: "UserNotFoundError",
+        message: "User not found",
+      };
+    }
+
+    return userId.id;
+
+  }
+
+  catch (error) {
+    throw error;
+  }
+}
+
+export async function registerDevice({ device_name, userId, }: { device_name: string, userId: number, }) {
+  try {
+    const { rows: found } = await client.query(`
+      SELECT *
+      FROM devices
+      WHERE user_id=$1 AND device_name=$2;
+      `, [userId, device_name]);
+
+    const isRegistered = found.length > 0;
+
+    if (isRegistered) return found[0];
+    const { rows: [device] } = await client.query(`
+      INSERT INTO devices (device_name, user_id)
+      VALUES ($1, $2)
+      ON CONFLICT DO NOTHING
+      RETURNING *;
+      `, [device_name, userId,]);
+
+    return device;
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+export function calcGravity([a, b, c, d]: number[], angle: number) {
+  return a * Math.pow(angle, 3) + b * Math.pow(angle, 2) + c * angle + d
+}
+
+
+export async function updateBrewGravity(brewId: string, gravity: number) {
+  try {
+    const { rows: [brew] } = await client.query(`
+  UPDATE devices 
+  SET gravity=$1
+  WHERE brew_id=$2
+  RETURNING *;
+  `, [gravity, brewId]);
+
+    return brew
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+export async function createLog(log: LogType) {
+  try {
+    const { rows: [newLog] } = await client.query(`
+    INSERT INTO logs (brew_id, device_id, angle, temperature, temp_units, battery, gravity, interval, calculated_gravity)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING *;
+    `, [log.brew_id, log.device_id, log.angle, log.temperature, log.temp_units, log.battery, log.gravity, log.interval, log.calculated_gravity]);
+    console.log(newLog);
+    return newLog
   }
   catch (error) {
     throw error;
