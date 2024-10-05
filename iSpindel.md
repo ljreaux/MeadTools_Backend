@@ -7,7 +7,6 @@
     - [devices](#devices)
     - [brews](#brews)
     - [users](#users)
-    - [recipes](#recipes)
   - [Endpoints](#endpoints)
     - [Global Types](#global-types)
     - [GET /api/ispindel](#get-apiispindel)
@@ -48,7 +47,7 @@ This details a proposed solution for adding iSpindel support to MeadTools. View 
 | ------------------ | -------- |
 | log_id             | PK       |
 | brew_id            | FK       |
-| name               | TEXT     |
+| device_id          | FK       |
 | angle              | FLOAT    |
 | temperature        | FLOAT    |
 | temp_units         | ENUM     |
@@ -63,6 +62,8 @@ This details a proposed solution for adding iSpindel support to MeadTools. View 
 | Key          | Datatype |
 | ------------ | -------- |
 | device_id    | PK       |
+| device_name  | TEXT     |
+| recipe_id    | FK       |
 | user_id      | FK       |
 | coefficients | INT[4]   |
 | brew_id      | FK       |
@@ -83,13 +84,6 @@ This details a proposed solution for adding iSpindel support to MeadTools. View 
 | ----------- | -------- |
 | ...         | ...      |
 | hydro_token | TEXT     |
-
-### recipes
-
-| Key     | Datatype |
-| ------- | -------- |
-| ...     | ...      |
-| brew_id | FK       |
 
 ## Endpoints
 
@@ -188,7 +182,7 @@ apiRouter.post("/api/ispindel", async (req, res, next) => {
     if (!userId) next({ message: "Token invalid." });
 
     // if token is valid, check if device is registered, if not add device to device table
-    const device = await registerDevice(body.ID);
+    const device = await registerDevice(body);
 
     // if device has coefficients listed, calculate gravity
     const { coefficients } = device;
@@ -205,6 +199,7 @@ apiRouter.post("/api/ispindel", async (req, res, next) => {
       datetime: new Date(),
       calculated_gravity,
       brew_id: device.currentBrewId,
+      deviceId: device.id,
     };
     const log = await createLog(log);
 
@@ -275,8 +270,6 @@ BrewType[]
 
 ```typescript
 apiRouter.get("/api/ispindel/logs/:deviceId", requireUser, async (req, res) => {
-  // REALLY unsure how this works.
-
   const { deviceId } = req.params;
   const logs = await getLogsForDevice(deviceId);
 
