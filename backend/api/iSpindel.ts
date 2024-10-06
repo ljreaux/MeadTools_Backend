@@ -2,7 +2,7 @@ import express from 'express';
 import { requireUser } from './utils';
 import { UserAuthInfoRequest } from '.';
 const iSpindelRouter = express.Router();
-import { calcGravity, createHydrometerToken, createLog, getHydrometerToken, registerDevice, updateBrewGravity, verifyToken } from '../db';
+import { calcGravity, createHydrometerToken, createLog, endBrew, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, startBrew, updateBrewGravity, updateLog, verifyToken } from '../db';
 
 iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
@@ -48,33 +48,78 @@ iSpindelRouter.post("/", async (req, res, next) => {
 iSpindelRouter.get("/logs", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
     const queryParams = req.query
-    const { id: userId } = req.user || { id: null };
     const { body } = req;
-    console.log(body);
-    res.send(`Fetching the ${queryParams} most recent logs for user ${userId}`);
+
+    const startDate = new Date(queryParams.start_date as string)
+    const endDate = new Date(queryParams.end_date as string)
+
+    const logs = await getLogs(body.device_id, startDate, endDate)
+
+    res.send(logs);
   } catch (err) {
     next({ error: err.message })
   }
 });
 iSpindelRouter.get("/logs/:brewId", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
-    const { brewId } = req.params
-    const { id: userId } = req.user || { id: null };
-    const { body } = req;
-    console.log(body);
-    res.send(`Fetching user ${userId} logs for brew ${brewId}`);
+    const { brewId } = req.params;
+    const logs = await getLogsForBrew(brewId, req.user?.id);
+
+    res.send(logs);
   } catch (err) {
     next({ error: err.message })
   }
 });
 
-iSpindelRouter.get("/:deviceId", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+iSpindelRouter.patch("/logs/:logId", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const { body } = req;
+    const { logId } = req.params;
+    const queryParams = req.query;
+    const device_id = queryParams.device_id as string;
+
+    // finds log, checks if user listed on brewId is userRequesting, then updates log
+    const logs = await updateLog(logId, body, device_id);
+
+    res.send(logs);
+  } catch (err) {
+    next(err.message);
+  }
+});
+
+iSpindelRouter.post("/brew", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const { device_id } = req.body;
+
+    const brew = await startBrew(device_id, req.user?.id);
+
+    res.send(brew);
+  } catch (err) {
+    next({ error: err.message });
+  }
+});
+
+iSpindelRouter.patch("/brew", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const { device_id, brew_id } = req.body;
+
+    // stop brew and update device table brew_id field to null
+    const brew = await endBrew(device_id, brew_id, req.user?.id);
+
+    res.send(brew);
+  } catch (err) {
+    next({ error: err.message });
+  }
+});
+
+iSpindelRouter.get("/devices", async (req: UserAuthInfoRequest, res, next) => {
   try {
     const { id: userId } = req.user || { id: null };
-    const { deviceId } = req.params;
-    const { body } = req;
-    console.log(body);
-    res.send(`Fetching recent logs for device ${deviceId} from user ${userId}`);
+
+    if (!userId) throw new Error('User not found');
+    const devices = await getDevicesForUser(userId);
+
+    res.send(devices);
   } catch (err) {
     next({ error: err.message })
   }

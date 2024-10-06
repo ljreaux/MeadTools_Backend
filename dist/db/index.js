@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createLog = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
+exports.getDevicesForUser = exports.updateLog = exports.getLogsForBrew = exports.endBrew = exports.startBrew = exports.getLogs = exports.createLog = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
 const short_unique_id_1 = __importDefault(require("short-unique-id"));
 exports.client = new pg_1.Client({
@@ -546,10 +546,9 @@ exports.calcGravity = calcGravity;
 async function updateBrewGravity(brewId, gravity) {
     try {
         const { rows: [brew] } = await exports.client.query(`
-  UPDATE devices 
-  SET gravity=$1
-  WHERE brew_id=$2
-  RETURNING *;
+  UPDATE brews
+  SET latest_gravity=$1
+  WHERE id=$2
   `, [gravity, brewId]);
         return brew;
     }
@@ -565,7 +564,6 @@ async function createLog(log) {
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *;
     `, [log.brew_id, log.device_id, log.angle, log.temperature, log.temp_units, log.battery, log.gravity, log.interval, log.calculated_gravity]);
-        console.log(newLog);
         return newLog;
     }
     catch (error) {
@@ -573,3 +571,119 @@ async function createLog(log) {
     }
 }
 exports.createLog = createLog;
+async function getLogs(deviceId, beginDate, endDate) {
+    try {
+        const { rows } = await exports.client.query(`
+    SELECT * FROM logs 
+    WHERE device_id=$1 AND 
+    datetime BETWEEN $2 AND $3
+    ORDER BY logs.datetime DESC;
+  `, [deviceId, beginDate, endDate]);
+        return rows;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.getLogs = getLogs;
+async function startBrew(deviceId, userId) {
+    try {
+        if (!userId)
+            throw Error;
+        const { rows: [brew] } = await exports.client.query(`
+    INSERT INTO brews
+    (user_id, start_date)
+    VALUES ($1, now())
+    RETURNING *;
+    `, [userId]);
+        const { rows: [device] } = await exports.client.query(`
+    UPDATE devices 
+    SET brew_id=$1
+    WHERE id=$2
+    RETURNING *;
+  `, [brew.id, deviceId]);
+        return [{ brew }, { device }];
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.startBrew = startBrew;
+async function endBrew(deviceId, brewId, userId) {
+    try {
+        if (!userId)
+            throw Error;
+        const { rows: [brew] } = await exports.client.query(`
+    UPDATE brews
+    SET end_date=now()
+    WHERE user_id=$1 AND id=$2
+    RETURNING *;
+    `, [userId, brewId]);
+        const { rows: [device] } = await exports.client.query(`
+    UPDATE devices 
+    SET brew_id=null
+    WHERE id=$1
+    RETURNING *;
+  `, [deviceId]);
+        return [{ brew }, { device }];
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.endBrew = endBrew;
+async function getLogsForBrew(brewId, userId) {
+    try {
+        const { rows: [brew] } = await exports.client.query(`
+      SELECT * FROM brews
+      WHERE id=$1 AND user_id=$2;
+    `, [brewId, userId]);
+        if (brew.user_id !== userId)
+            throw new Error("You are not authorized to view these logs");
+        const { rows: logs } = await exports.client.query(`
+      SELECT * from logs
+      WHERE brew_id=$1
+      ORDER BY datetime DESC;
+    `, [brewId]);
+        return logs;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.getLogsForBrew = getLogsForBrew;
+async function updateLog(id, fields, deviceId) {
+    if (!deviceId)
+        throw Error;
+    // build the set string
+    const setString = Object.keys(fields)
+        .map((key, index) => `"${key}"=$${index + 1}`)
+        .join(", ");
+    const values = Object.values(fields);
+    values.push(id, deviceId);
+    // return early if this is called without fields
+    if (setString.length === 0) {
+        return;
+    }
+    const { rows: [edited] } = await exports.client.query(`
+      UPDATE logs  
+      SET ${setString}
+      WHERE id=$${values.length - 1} AND device_id=$${values.length}
+      RETURNING *;
+    `, values);
+    return edited;
+}
+exports.updateLog = updateLog;
+async function getDevicesForUser(userId) {
+    try {
+        const { rows } = await exports.client.query(`
+      SELECT * FROM devices
+      WHERE user_id=$1;
+    `, [userId]);
+        return rows;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.getDevicesForUser = getDevicesForUser;

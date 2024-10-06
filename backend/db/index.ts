@@ -727,10 +727,9 @@ export function calcGravity([a, b, c, d]: number[], angle: number) {
 export async function updateBrewGravity(brewId: string, gravity: number) {
   try {
     const { rows: [brew] } = await client.query(`
-  UPDATE devices 
-  SET gravity=$1
-  WHERE brew_id=$2
-  RETURNING *;
+  UPDATE brews
+  SET latest_gravity=$1
+  WHERE id=$2
   `, [gravity, brewId]);
 
     return brew
@@ -747,8 +746,132 @@ export async function createLog(log: LogType) {
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *;
     `, [log.brew_id, log.device_id, log.angle, log.temperature, log.temp_units, log.battery, log.gravity, log.interval, log.calculated_gravity]);
-    console.log(newLog);
+
     return newLog
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+export async function getLogs(deviceId: number, beginDate: Date, endDate: Date) {
+  try {
+    const { rows } = await client.query(`
+    SELECT * FROM logs 
+    WHERE device_id=$1 AND 
+    datetime BETWEEN $2 AND $3
+    ORDER BY logs.datetime DESC;
+  `, [deviceId, beginDate, endDate]);
+
+
+    return rows;
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+export async function startBrew(deviceId: string, userId?: string) {
+  try {
+    if (!userId) throw Error
+
+    const { rows: [brew] } = await client.query(`
+    INSERT INTO brews
+    (user_id, start_date)
+    VALUES ($1, now())
+    RETURNING *;
+    `, [userId]);
+    const { rows: [device] } = await client.query(`
+    UPDATE devices 
+    SET brew_id=$1
+    WHERE id=$2
+    RETURNING *;
+  `, [brew.id, deviceId]);
+
+    return [{ brew }, { device }];
+  }
+  catch (error) {
+    throw error;
+  }
+}
+export async function endBrew(deviceId: string, brewId: string, userId?: string) {
+  try {
+    if (!userId) throw Error
+
+    const { rows: [brew] } = await client.query(`
+    UPDATE brews
+    SET end_date=now()
+    WHERE user_id=$1 AND id=$2
+    RETURNING *;
+    `, [userId, brewId]);
+    const { rows: [device] } = await client.query(`
+    UPDATE devices 
+    SET brew_id=null
+    WHERE id=$1
+    RETURNING *;
+  `, [deviceId]);
+
+    return [{ brew }, { device }];
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+export async function getLogsForBrew(brewId: string, userId?: string) {
+  try {
+    const { rows: [brew] } = await client.query(`
+      SELECT * FROM brews
+      WHERE id=$1 AND user_id=$2;
+    `, [brewId, userId]);
+
+    if (brew.user_id !== userId) throw new Error("You are not authorized to view these logs")
+
+    const { rows: logs } = await client.query(`
+      SELECT * from logs
+      WHERE brew_id=$1
+      ORDER BY datetime DESC;
+    `, [brewId]);
+
+    return logs;
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+export async function updateLog(id: string, fields: LogType, deviceId?: string,) {
+  if (!deviceId) throw Error
+  // build the set string
+  const setString = Object.keys(fields)
+    .map((key, index) => `"${key}"=$${index + 1}`)
+    .join(", ");
+
+  const values = Object.values(fields);
+  values.push(id, deviceId);
+
+  // return early if this is called without fields
+  if (setString.length === 0) {
+    return;
+  }
+  const { rows: [edited] } = await client.query(`
+      UPDATE logs  
+      SET ${setString}
+      WHERE id=$${values.length - 1} AND device_id=$${values.length}
+      RETURNING *;
+    `, values);
+
+  return edited
+}
+
+export async function getDevicesForUser(userId: string) {
+  try {
+    const { rows } = await client.query(`
+      SELECT * FROM devices
+      WHERE user_id=$1;
+    `, [userId]);
+
+    return rows;
   }
   catch (error) {
     throw error;
