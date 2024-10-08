@@ -771,6 +771,23 @@ export async function getLogs(deviceId: number, beginDate: Date, endDate: Date) 
   }
 }
 
+
+export async function getBrews(userId?: string) {
+  try {
+    if (!userId) throw Error
+
+    const { rows: brews } = await client.query(`
+    SELECT * FROM brews
+    WHERE user_id=$1;
+    `, [userId]);
+
+    return brews;
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
 export async function startBrew(deviceId: string, userId?: string) {
   try {
     if (!userId) throw Error
@@ -830,7 +847,7 @@ export async function getLogsForBrew(brewId: string, userId?: string) {
     const { rows: logs } = await client.query(`
       SELECT * from logs
       WHERE brew_id=$1
-      ORDER BY datetime DESC;
+      ORDER BY datetime ASC;
     `, [brewId]);
 
     return logs;
@@ -841,28 +858,50 @@ export async function getLogsForBrew(brewId: string, userId?: string) {
 }
 
 export async function updateLog(id: string, fields: LogType, deviceId?: string,) {
-  if (!deviceId) throw Error
-  // build the set string
-  const setString = Object.keys(fields)
-    .map((key, index) => `"${key}"=$${index + 1}`)
-    .join(", ");
+  try {
+    if (!deviceId) throw Error
+    // build the set string
+    const setString = Object.keys(fields)
+      .map((key, index) => `"${key}"=$${index + 1}`)
+      .join(", ");
 
-  const values = Object.values(fields);
-  values.push(id, deviceId);
+    const values = Object.values(fields);
+    values.push(id, deviceId);
 
-  // return early if this is called without fields
-  if (setString.length === 0) {
-    return;
-  }
-  const { rows: [edited] } = await client.query(`
+    // return early if this is called without fields
+    if (setString.length === 0) {
+      return;
+    }
+    const { rows: [edited] } = await client.query(`
       UPDATE logs  
       SET ${setString}
       WHERE id=$${values.length - 1} AND device_id=$${values.length}
       RETURNING *;
     `, values);
 
-  return edited
+    return edited
+  } catch (err) {
+    console.log(err)
+    throw new Error('Failed to update log')
+
+  }
 }
+
+export async function deleteLog(id: string, deviceId?: string,) {
+  if (!deviceId) throw Error
+  try {
+    await client.query(`
+      DELETE FROM logs  
+      WHERE id=$1 AND device_id=$2;
+    `, [id, deviceId]);
+    return { message: `Log ${id} deleted successfully.` }
+  } catch (err) {
+    console.log(err)
+    throw new Error('Failed to delete log')
+  }
+}
+
+
 
 export async function getDevicesForUser(userId: string) {
   try {
@@ -872,6 +911,22 @@ export async function getDevicesForUser(userId: string) {
     `, [userId]);
 
     return rows;
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
+export async function updateCoeff(deviceId: string, coefficients: number[], id?: string,) {
+  try {
+    if (!id) throw new Error('You must be the logged in user');
+    const { rows: [device] } = await client.query(`
+    UPDATE devices
+    SET coefficients=$1
+    WHERE id=$2 AND user_id=$3
+    RETURNING *;
+    `, [coefficients, deviceId, id]);
+    return device;
   }
   catch (error) {
     throw error;

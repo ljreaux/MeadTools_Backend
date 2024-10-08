@@ -2,15 +2,16 @@ import express from 'express';
 import { requireUser } from './utils';
 import { UserAuthInfoRequest } from '.';
 const iSpindelRouter = express.Router();
-import { calcGravity, createHydrometerToken, createLog, endBrew, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, startBrew, updateBrewGravity, updateLog, verifyToken } from '../db';
+import { calcGravity, createHydrometerToken, createLog, deleteLog, endBrew, getBrews, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, startBrew, updateBrewGravity, updateCoeff, updateLog, verifyToken } from '../db';
 
 iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
     const { id: userId } = req.user || { id: null };
-    let hydrometerToken;
-    if (userId) hydrometerToken = await getHydrometerToken(userId);
 
-    res.send({ hydrometerToken, devices: [] });
+    if (!userId) throw new Error('User not found');
+    const hydrometerToken = await getHydrometerToken(userId);
+    const devices = await getDevicesForUser(userId);
+    res.send({ hydrometerToken, devices });
   } catch (err) {
     next({ error: err.message })
   }
@@ -45,7 +46,7 @@ iSpindelRouter.post("/", async (req, res, next) => {
   }
 });
 
-iSpindelRouter.get("/logs", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+iSpindelRouter.post("/logs", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
     const queryParams = req.query
     const { body } = req;
@@ -77,13 +78,39 @@ iSpindelRouter.patch("/logs/:logId", requireUser, async (req: UserAuthInfoReques
     const { logId } = req.params;
     const queryParams = req.query;
     const device_id = queryParams.device_id as string;
-
     // finds log, checks if user listed on brewId is userRequesting, then updates log
     const logs = await updateLog(logId, body, device_id);
 
     res.send(logs);
   } catch (err) {
     next(err.message);
+  }
+});
+
+iSpindelRouter.delete("/logs/:logId", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const { logId } = req.params;
+    const queryParams = req.query;
+    const device_id = queryParams.device_id as string;
+
+    // finds log, checks if user listed on brewId is userRequesting, then updates log
+    const logs = await deleteLog(logId, device_id);
+
+    res.send(logs);
+  } catch (err) {
+    next(err.message);
+  }
+});
+
+
+
+iSpindelRouter.get("/brew", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const brews = await getBrews(req.user?.id);
+
+    res.send(brews);
+  } catch (err) {
+    next({ error: err.message });
   }
 });
 
@@ -112,18 +139,19 @@ iSpindelRouter.patch("/brew", requireUser, async (req: UserAuthInfoRequest, res,
   }
 });
 
-iSpindelRouter.get("/devices", async (req: UserAuthInfoRequest, res, next) => {
+iSpindelRouter.patch("/device/:device_id", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
-    const { id: userId } = req.user || { id: null };
+    const { device_id } = req.params;
 
-    if (!userId) throw new Error('User not found');
-    const devices = await getDevicesForUser(userId);
+    const device = await updateCoeff(device_id, req.body.coefficients, req.user?.id,)
 
-    res.send(devices);
+
+    res.send(device);
   } catch (err) {
-    next({ error: err.message })
+    next({ error: err.message });
   }
-})
+});
+
 
 iSpindelRouter.post("/register", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {

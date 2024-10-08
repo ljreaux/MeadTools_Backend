@@ -10,10 +10,11 @@ const db_1 = require("../db");
 iSpindelRouter.get("/", utils_1.requireUser, async (req, res, next) => {
     try {
         const { id: userId } = req.user || { id: null };
-        let hydrometerToken;
-        if (userId)
-            hydrometerToken = await (0, db_1.getHydrometerToken)(userId);
-        res.send({ hydrometerToken, devices: [] });
+        if (!userId)
+            throw new Error('User not found');
+        const hydrometerToken = await (0, db_1.getHydrometerToken)(userId);
+        const devices = await (0, db_1.getDevicesForUser)(userId);
+        res.send({ hydrometerToken, devices });
     }
     catch (err) {
         next({ error: err.message });
@@ -83,6 +84,15 @@ iSpindelRouter.patch("/logs/:logId", utils_1.requireUser, async (req, res, next)
         next(err.message);
     }
 });
+iSpindelRouter.get("/brew", utils_1.requireUser, async (req, res, next) => {
+    try {
+        const brews = await (0, db_1.getBrews)(req.user?.id);
+        res.send(brews);
+    }
+    catch (err) {
+        next({ error: err.message });
+    }
+});
 iSpindelRouter.post("/brew", utils_1.requireUser, async (req, res, next) => {
     try {
         const { device_id } = req.body;
@@ -104,13 +114,11 @@ iSpindelRouter.patch("/brew", utils_1.requireUser, async (req, res, next) => {
         next({ error: err.message });
     }
 });
-iSpindelRouter.get("/devices", async (req, res, next) => {
+iSpindelRouter.patch("/device/:device_id", utils_1.requireUser, async (req, res, next) => {
     try {
-        const { id: userId } = req.user || { id: null };
-        if (!userId)
-            throw new Error('User not found');
-        const devices = await (0, db_1.getDevicesForUser)(userId);
-        res.send(devices);
+        const { device_id } = req.params;
+        const device = await (0, db_1.updateCoeff)(device_id, req.body.coefficients, req.user?.id);
+        res.send(device);
     }
     catch (err) {
         next({ error: err.message });

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDevicesForUser = exports.updateLog = exports.getLogsForBrew = exports.endBrew = exports.startBrew = exports.getLogs = exports.createLog = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
+exports.updateCoeff = exports.getDevicesForUser = exports.updateLog = exports.getLogsForBrew = exports.endBrew = exports.startBrew = exports.getBrews = exports.getLogs = exports.createLog = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
 const short_unique_id_1 = __importDefault(require("short-unique-id"));
 exports.client = new pg_1.Client({
@@ -586,6 +586,21 @@ async function getLogs(deviceId, beginDate, endDate) {
     }
 }
 exports.getLogs = getLogs;
+async function getBrews(userId) {
+    try {
+        if (!userId)
+            throw Error;
+        const { rows: brews } = await exports.client.query(`
+    SELECT * FROM brews
+    WHERE user_id=$1;
+    `, [userId]);
+        return brews;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.getBrews = getBrews;
 async function startBrew(deviceId, userId) {
     try {
         if (!userId)
@@ -687,3 +702,20 @@ async function getDevicesForUser(userId) {
     }
 }
 exports.getDevicesForUser = getDevicesForUser;
+async function updateCoeff(deviceId, coefficients, id) {
+    try {
+        if (!id)
+            throw new Error('You must be the logged in user');
+        const { rows: [device] } = await exports.client.query(`
+    UPDATE devices
+    SET coefficients=$1
+    WHERE id=$2 AND user_id=$3
+    RETURNING *;
+    `, [coefficients, deviceId, id]);
+        return device;
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.updateCoeff = updateCoeff;
