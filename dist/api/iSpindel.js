@@ -127,6 +127,18 @@ iSpindelRouter.patch("/brew", utils_1.requireUser, async (req, res, next) => {
         next({ error: err.message });
     }
 });
+iSpindelRouter.patch("/brew/:brew_id", utils_1.requireUser, async (req, res, next) => {
+    try {
+        const { brew_id } = req.params;
+        const { recipe_id } = req.body;
+        // stop brew and update device table brew_id field to null
+        const brew = await (0, db_1.addBrewRec)(recipe_id, brew_id, req.user?.id);
+        res.send(brew);
+    }
+    catch (err) {
+        next({ error: err.message });
+    }
+});
 iSpindelRouter.patch("/device/:device_id", utils_1.requireUser, async (req, res, next) => {
     try {
         const { device_id } = req.params;

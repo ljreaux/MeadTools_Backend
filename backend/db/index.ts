@@ -835,6 +835,25 @@ export async function endBrew(deviceId: string, brewId: string, userId?: string)
   }
 }
 
+export async function addBrewRec(recipeId: string, brewId: string, userId?: string) {
+  try {
+    if (!userId) throw Error
+
+    const { rows: [brew] } = await client.query(`
+    UPDATE brews
+    SET recipe_id=$1
+    WHERE user_id=$2 AND id=$3
+    RETURNING *;
+    `, [recipeId, userId, brewId]);
+
+
+    return brew;
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
 export async function getLogsForBrew(brewId: string, userId?: string) {
   try {
     const { rows: [brew] } = await client.query(`

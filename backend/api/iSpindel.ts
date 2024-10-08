@@ -2,7 +2,7 @@ import express from 'express';
 import { requireUser } from './utils';
 import { UserAuthInfoRequest } from '.';
 const iSpindelRouter = express.Router();
-import { calcGravity, createHydrometerToken, createLog, deleteLog, endBrew, getBrews, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, startBrew, updateBrewGravity, updateCoeff, updateLog, verifyToken } from '../db';
+import { addBrewRec, calcGravity, createHydrometerToken, createLog, deleteLog, endBrew, getBrews, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, startBrew, updateBrewGravity, updateCoeff, updateLog, verifyToken } from '../db';
 
 iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
@@ -132,6 +132,19 @@ iSpindelRouter.patch("/brew", requireUser, async (req: UserAuthInfoRequest, res,
 
     // stop brew and update device table brew_id field to null
     const brew = await endBrew(device_id, brew_id, req.user?.id);
+
+    res.send(brew);
+  } catch (err) {
+    next({ error: err.message });
+  }
+});
+iSpindelRouter.patch("/brew/:brew_id", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const { brew_id } = req.params
+    const { recipe_id } = req.body;
+
+    // stop brew and update device table brew_id field to null
+    const brew = await addBrewRec(recipe_id, brew_id, req.user?.id);
 
     res.send(brew);
   } catch (err) {
