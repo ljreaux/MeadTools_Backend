@@ -47,7 +47,7 @@ iSpindelRouter.post("/", async (req, res, next) => {
         next({ error: err.message });
     }
 });
-iSpindelRouter.get("/logs", utils_1.requireUser, async (req, res, next) => {
+iSpindelRouter.post("/logs", utils_1.requireUser, async (req, res, next) => {
     try {
         const queryParams = req.query;
         const { body } = req;
@@ -78,6 +78,19 @@ iSpindelRouter.patch("/logs/:logId", utils_1.requireUser, async (req, res, next)
         const device_id = queryParams.device_id;
         // finds log, checks if user listed on brewId is userRequesting, then updates log
         const logs = await (0, db_1.updateLog)(logId, body, device_id);
+        res.send(logs);
+    }
+    catch (err) {
+        next(err.message);
+    }
+});
+iSpindelRouter.delete("/logs/:logId", utils_1.requireUser, async (req, res, next) => {
+    try {
+        const { logId } = req.params;
+        const queryParams = req.query;
+        const device_id = queryParams.device_id;
+        // finds log, checks if user listed on brewId is userRequesting, then updates log
+        const logs = await (0, db_1.deleteLog)(logId, device_id);
         res.send(logs);
     }
     catch (err) {
