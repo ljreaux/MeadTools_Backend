@@ -224,14 +224,42 @@ export async function getAllRecipesForUser(id: string | null) {
 
 export async function getRecipeInfo(recipeId: string) {
   try {
-    const {
-      rows: [recipe],
-    } = await client.query(
+    const { rows } = await client.query(
       `
-      SELECT * FROM recipes WHERE id=$1;
+      SELECT * 
+      FROM recipes
+      LEFT JOIN brews 
+      ON brews.recipe_id= recipes.id
+      WHERE recipes.id=$1;
     `,
       [recipeId]
     );
+    console.log(rows)
+    const recipe = { ...rows[0] };
+
+    if (rows[0].start_date) {
+      recipe.id = recipe.recipe_id;
+
+    }
+    delete recipe.recipe_id
+    delete recipe.start_date;
+    delete recipe.end_date;
+    delete recipe.latest_gravity;
+
+    rows.forEach((row) => {
+      if (!row.start_date) return;
+      const currentBrew = {
+        id: row.id,
+        start_date: row.start_date,
+        end_date: row.end_date,
+        latest_gravity: row.latest_gravity,
+      };
+      if (recipe.brews) {
+        recipe.brews.push(currentBrew);
+      } else recipe.brews = [currentBrew];
+    });
+
+    console.log(recipe);
     if (!recipe)
       return { name: "RecipeNotFoundError", message: "Recipe not found" };
     return recipe;
@@ -251,7 +279,7 @@ export async function createRecipe({
   nuteInfo,
   primaryNotes = ["", ""],
   secondaryNotes = ["", ""],
-  privateRecipe = false
+  privateRecipe = false,
 }: Recipe) {
   try {
     const {
@@ -283,7 +311,7 @@ export async function createRecipe({
         nuteInfo,
         primaryNotes,
         secondaryNotes,
-        privateRecipe
+        privateRecipe,
       ]
     );
     return recipe;
@@ -417,7 +445,6 @@ export async function getIngredient(id: string) {
 }
 
 export async function getIngredientsByCategory(cat: string) {
-
   try {
     const { rows: ingredients } = await client.query(
       `
@@ -557,7 +584,6 @@ export async function getYeastByName(name: string) {
   }
 }
 
-
 export async function getYeastById(id: string) {
   try {
     const {
@@ -578,7 +604,6 @@ export async function getYeastById(id: string) {
     throw error;
   }
 }
-
 
 export async function getYeastByBrand(brand: string) {
   try {
@@ -622,33 +647,40 @@ export async function createHydrometerToken(userId: string) {
   const token = randomUUID(10);
 
   try {
-    const { rows: [user] } = await client.query(`
+    const {
+      rows: [user],
+    } = await client.query(
+      `
       UPDATE users
       SET hydro_token=$1
       WHERE id=$2
       RETURNING *;
-      `, [token, userId]);
-
+      `,
+      [token, userId]
+    );
 
     return {
       userId: user.id,
       email: user.email,
       token: user.hydro_token,
-    }
-
+    };
   } catch (error) {
     throw error;
   }
-
 }
 
 export async function getHydrometerToken(userId: string) {
   try {
-    const { rows: [user] } = await client.query(`
+    const {
+      rows: [user],
+    } = await client.query(
+      `
     SELECT hydro_token
     FROM users
     WHERE id=$1;
-    `, [userId]);
+    `,
+      [userId]
+    );
 
     if (!user) {
       throw {
@@ -658,25 +690,29 @@ export async function getHydrometerToken(userId: string) {
     }
 
     return user.hydro_token;
-
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
 export async function verifyToken(token: string | undefined) {
   try {
-    if (!token) throw {
-      name: "TokenNotFoundError",
-      message: "Token not found",
-    };
+    if (!token)
+      throw {
+        name: "TokenNotFoundError",
+        message: "Token not found",
+      };
 
-    const { rows: [userId] } = await client.query(`
+    const {
+      rows: [userId],
+    } = await client.query(
+      `
       SELECT id
       FROM users
       WHERE hydro_token=$1;
-      `, [token]);
+      `,
+      [token]
+    );
 
     if (!userId) {
       throw {
@@ -686,199 +722,273 @@ export async function verifyToken(token: string | undefined) {
     }
 
     return userId.id;
-
-  }
-
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
-export async function registerDevice({ device_name, userId, }: { device_name: string, userId: number, }) {
+export async function registerDevice({
+  device_name,
+  userId,
+}: {
+  device_name: string;
+  userId: number;
+}) {
   try {
-    const { rows: found } = await client.query(`
+    const { rows: found } = await client.query(
+      `
       SELECT *
       FROM devices
       WHERE user_id=$1 AND device_name=$2;
-      `, [userId, device_name]);
+      `,
+      [userId, device_name]
+    );
 
     const isRegistered = found.length > 0;
 
     if (isRegistered) return found[0];
-    const { rows: [device] } = await client.query(`
+    const {
+      rows: [device],
+    } = await client.query(
+      `
       INSERT INTO devices (device_name, user_id)
       VALUES ($1, $2)
       ON CONFLICT DO NOTHING
       RETURNING *;
-      `, [device_name, userId,]);
+      `,
+      [device_name, userId]
+    );
 
     return device;
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
 export function calcGravity([a, b, c, d]: number[], angle: number) {
-  return a * Math.pow(angle, 3) + b * Math.pow(angle, 2) + c * angle + d
+  return a * Math.pow(angle, 3) + b * Math.pow(angle, 2) + c * angle + d;
 }
-
 
 export async function updateBrewGravity(brewId: string, gravity: number) {
   try {
-    const { rows: [brew] } = await client.query(`
+    const {
+      rows: [brew],
+    } = await client.query(
+      `
   UPDATE brews
   SET latest_gravity=$1
   WHERE id=$2
-  `, [gravity, brewId]);
+  `,
+      [gravity, brewId]
+    );
 
-    return brew
-  }
-  catch (error) {
+    return brew;
+  } catch (error) {
     throw error;
   }
 }
 
 export async function createLog(log: LogType) {
   try {
-    const { rows: [newLog] } = await client.query(`
+    const {
+      rows: [newLog],
+    } = await client.query(
+      `
     INSERT INTO logs (brew_id, device_id, angle, temperature, temp_units, battery, gravity, interval, calculated_gravity)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *;
-    `, [log.brew_id, log.device_id, log.angle, log.temperature, log.temp_units, log.battery, log.gravity, log.interval, log.calculated_gravity]);
+    `,
+      [
+        log.brew_id,
+        log.device_id,
+        log.angle,
+        log.temperature,
+        log.temp_units,
+        log.battery,
+        log.gravity,
+        log.interval,
+        log.calculated_gravity,
+      ]
+    );
 
-    return newLog
-  }
-  catch (error) {
+    return newLog;
+  } catch (error) {
     throw error;
   }
 }
 
-export async function getLogs(deviceId: number, beginDate: Date, endDate: Date) {
+export async function getLogs(
+  deviceId: number,
+  beginDate: Date,
+  endDate: Date
+) {
   try {
-    const { rows } = await client.query(`
+    const { rows } = await client.query(
+      `
     SELECT * FROM logs 
     WHERE device_id=$1 AND 
     datetime BETWEEN $2 AND $3
     ORDER BY logs.datetime DESC;
-  `, [deviceId, beginDate, endDate]);
-
+  `,
+      [deviceId, beginDate, endDate]
+    );
 
     return rows;
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
-
 export async function getBrews(userId?: string) {
   try {
-    if (!userId) throw Error
+    if (!userId) throw Error;
 
-    const { rows: brews } = await client.query(`
+    const { rows: brews } = await client.query(
+      `
     SELECT * FROM brews
     WHERE user_id=$1;
-    `, [userId]);
+    `,
+      [userId]
+    );
 
     return brews;
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
 export async function startBrew(deviceId: string, userId?: string) {
   try {
-    if (!userId) throw Error
+    if (!userId) throw Error;
 
-    const { rows: [brew] } = await client.query(`
+    const {
+      rows: [brew],
+    } = await client.query(
+      `
     INSERT INTO brews
     (user_id, start_date)
     VALUES ($1, now())
     RETURNING *;
-    `, [userId]);
-    const { rows: [device] } = await client.query(`
+    `,
+      [userId]
+    );
+    const {
+      rows: [device],
+    } = await client.query(
+      `
     UPDATE devices 
     SET brew_id=$1
     WHERE id=$2
     RETURNING *;
-  `, [brew.id, deviceId]);
+  `,
+      [brew.id, deviceId]
+    );
 
     return [{ brew }, { device }];
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
-export async function endBrew(deviceId: string, brewId: string, userId?: string) {
+export async function endBrew(
+  deviceId: string,
+  brewId: string,
+  userId?: string
+) {
   try {
-    if (!userId) throw Error
+    if (!userId) throw Error;
 
-    const { rows: [brew] } = await client.query(`
+    const {
+      rows: [brew],
+    } = await client.query(
+      `
     UPDATE brews
     SET end_date=now()
     WHERE user_id=$1 AND id=$2
     RETURNING *;
-    `, [userId, brewId]);
-    const { rows: [device] } = await client.query(`
+    `,
+      [userId, brewId]
+    );
+    const {
+      rows: [device],
+    } = await client.query(
+      `
     UPDATE devices 
     SET brew_id=null
     WHERE id=$1
     RETURNING *;
-  `, [deviceId]);
+  `,
+      [deviceId]
+    );
 
     return [{ brew }, { device }];
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
-export async function addBrewRec(recipeId: string, brewId: string, userId?: string) {
+export async function addBrewRec(
+  recipeId: string,
+  brewId: string,
+  userId?: string
+) {
   try {
-    if (!userId) throw Error
+    if (!userId) throw Error;
 
-    const { rows: [brew] } = await client.query(`
+    const {
+      rows: [brew],
+    } = await client.query(
+      `
     UPDATE brews
     SET recipe_id=$1
     WHERE user_id=$2 AND id=$3
     RETURNING *;
-    `, [recipeId, userId, brewId]);
-
+    `,
+      [recipeId, userId, brewId]
+    );
 
     return brew;
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
 export async function getLogsForBrew(brewId: string, userId?: string) {
   try {
-    const { rows: [brew] } = await client.query(`
+    const {
+      rows: [brew],
+    } = await client.query(
+      `
       SELECT * FROM brews
       WHERE id=$1 AND user_id=$2;
-    `, [brewId, userId]);
+    `,
+      [brewId, userId]
+    );
 
-    if (brew.user_id !== userId) throw new Error("You are not authorized to view these logs")
+    if (brew.user_id !== userId)
+      throw new Error("You are not authorized to view these logs");
 
-    const { rows: logs } = await client.query(`
+    const { rows: logs } = await client.query(
+      `
       SELECT * from logs
       WHERE brew_id=$1
       ORDER BY datetime ASC;
-    `, [brewId]);
+    `,
+      [brewId]
+    );
 
     return logs;
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
-export async function updateLog(id: string, fields: LogType, deviceId?: string,) {
+export async function updateLog(
+  id: string,
+  fields: LogType,
+  deviceId?: string
+) {
   try {
-    if (!deviceId) throw Error
+    if (!deviceId) throw Error;
     // build the set string
     const setString = Object.keys(fields)
       .map((key, index) => `"${key}"=$${index + 1}`)
@@ -891,63 +1001,78 @@ export async function updateLog(id: string, fields: LogType, deviceId?: string,)
     if (setString.length === 0) {
       return;
     }
-    const { rows: [edited] } = await client.query(`
+    const {
+      rows: [edited],
+    } = await client.query(
+      `
       UPDATE logs  
       SET ${setString}
       WHERE id=$${values.length - 1} AND device_id=$${values.length}
       RETURNING *;
-    `, values);
+    `,
+      values
+    );
 
-    return edited
+    return edited;
   } catch (err) {
-    console.log(err)
-    throw new Error('Failed to update log')
-
+    console.log(err);
+    throw new Error("Failed to update log");
   }
 }
 
-export async function deleteLog(id: string, deviceId?: string,) {
-  if (!deviceId) throw Error
+export async function deleteLog(id: string, deviceId?: string) {
+  if (!deviceId) throw Error;
   try {
-    await client.query(`
+    await client.query(
+      `
       DELETE FROM logs  
       WHERE id=$1 AND device_id=$2;
-    `, [id, deviceId]);
-    return { message: `Log ${id} deleted successfully.` }
+    `,
+      [id, deviceId]
+    );
+    return { message: `Log ${id} deleted successfully.` };
   } catch (err) {
-    console.log(err)
-    throw new Error('Failed to delete log')
+    console.log(err);
+    throw new Error("Failed to delete log");
   }
 }
-
-
 
 export async function getDevicesForUser(userId: string) {
   try {
-    const { rows } = await client.query(`
+    const { rows } = await client.query(
+      `
       SELECT * FROM devices
       WHERE user_id=$1;
-    `, [userId]);
+    `,
+      [userId]
+    );
 
     return rows;
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
 
-export async function updateCoeff(deviceId: string, coefficients: number[], id?: string,) {
+export async function updateCoeff(
+  deviceId: string,
+  coefficients: number[],
+  id?: string
+) {
   try {
-    if (!id) throw new Error('You must be the logged in user');
-    const { rows: [device] } = await client.query(`
+    if (!id) throw new Error("You must be the logged in user");
+    const {
+      rows: [device],
+    } = await client.query(
+      `
     UPDATE devices
     SET coefficients=$1
     WHERE id=$2 AND user_id=$3
     RETURNING *;
-    `, [coefficients, deviceId, id]);
+    `,
+      [coefficients, deviceId, id]
+    );
     return device;
-  }
-  catch (error) {
+  } catch (error) {
     throw error;
   }
 }
