@@ -47,13 +47,13 @@ iSpindelRouter.post("/", async (req, res, next) => {
         next({ error: err.message });
     }
 });
-iSpindelRouter.post("/logs", utils_1.requireUser, async (req, res, next) => {
+iSpindelRouter.get("/logs", utils_1.requireUser, async (req, res, next) => {
     try {
         const queryParams = req.query;
-        const { body } = req;
         const startDate = new Date(queryParams.start_date);
         const endDate = new Date(queryParams.end_date);
-        const logs = await (0, db_1.getLogs)(body.device_id, startDate, endDate);
+        const device_id = queryParams.device_id;
+        const logs = await (0, db_1.getLogs)(device_id, startDate, endDate);
         res.send(logs);
     }
     catch (err) {

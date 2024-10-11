@@ -22,6 +22,18 @@ This api serves as the backend for MeadTools and MeadTools Mobile. It was create
       - [GET /api/ingredients/_:ingredientName_](#get-apiingredientsingredientname)
       - [PATCH /api/ingredients/_:ingredientId_](#patch-apiingredientsingredientid)
       - [DELETE /api/ingredients/_:ingredientId_](#delete-apiingredientsingredientid)
+    - [iSpindel](#ispindel)
+      - [GET /api/ispindel](#get-apiispindel)
+      - [POST /api/ispindel](#post-apiispindel)
+      - [GET /api/ispindel/logs](#get-apiispindellogs)
+      - [GET /api/ispindel/logs/_:brewId_](#get-apiispindellogsbrewid)
+      - [PATCH /api/ispindel/logs/_:logId_](#patch-apiispindellogslogid)
+      - [DELETE /api/ispindel/logs/_:logId_](#delete-apiispindellogslogid)
+      - [GET /api/ispindel/brew](#get-apiispindelbrew)
+      - [POST /api/ispindel/brew](#post-apiispindelbrew)
+      - [PATCH /api/ispindel/brew](#patch-apiispindelbrew)
+      - [PATCH /api/ispindel/brew/_:brewId_](#patch-apiispindelbrewbrewid)
+      - [PATCH /api/ispindel/device/_:deviceId_](#patch-apiispindeldevicedeviceid)
     - [Recipes](#recipes)
       - [GET /api/recipes/](#get-apirecipes)
       - [POST /api/recipes/](#post-apirecipes)
@@ -167,6 +179,292 @@ type Ingredient = {
 }
 ```
 
+### iSpindel
+
+#### GET /api/ispindel
+
+- User Required
+
+```typescript title="Sample Response"
+{
+  hydrometerToken: "LmyELJa0kM",
+  devices: [
+        {
+            id: "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+            device_name: "Test Device",
+            recipe_id: null,
+            user_id: 1,
+            coefficients: [],
+            brew_id: null
+        }
+    ]
+}
+```
+
+#### POST /api/ispindel
+
+- Meant for use by iSpindel device
+- Must supply a valid token
+- device_name used to identify device
+
+```json title="Sample Request"
+{
+  "name": "Test Device",
+  "ID": 12345678,
+  "token": "LmyELJa0kM",
+  "angle": 27.33976555,
+  "temperature": 77.78749847,
+  "temp_units": "F",
+  "battery": 4.098018646,
+  "gravity": 0.942535937,
+  "interval": 180,
+  "RSSI": -42
+}
+```
+
+```json title="Sample Response (Not received by iSpindel device)"
+{
+  "id": "b963fd29-8518-4275-bb25-a9932d3eafbe",
+  "datetime": "2024-10-11T00:25:06.175Z",
+  "angle": 27.339766,
+  "temperature": 77.7875,
+  "temp_units": "F",
+  "battery": 4.0980186,
+  "gravity": 0.94253594,
+  "interval": 180,
+  "calculated_gravity": 0,
+  "device_id": "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+  "brew_id": null
+}
+```
+
+#### GET /api/ispindel/logs
+
+- User Required
+- Requires start_date, end_date, and device_id query params
+
+```typescript title="Example Request"
+const getLogs = async (
+  token: string,
+  start_date: string,
+  end_date: string,
+  device_id: string
+) => {
+  const url = `${API_URL}/ispindel/logs?start_date=${start_date}&end_date=${end_date}&device_id=${device_id}`;
+  const { data, status } = await axios.get(url, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (status === 200) {
+    return data;
+  } else {
+    console.error("Failed to get logs", status);
+  }
+};
+```
+
+```json title="Sample Response"
+[
+  {
+    "id": "b963fd29-8518-4275-bb25-a9932d3eafbe",
+    "datetime": "2024-10-11T00:25:06.175Z",
+    "angle": 27.339766,
+    "temperature": 77.7875,
+    "temp_units": "F",
+    "battery": 4.0980186,
+    "gravity": 0.94253594,
+    "interval": 180,
+    "calculated_gravity": 0,
+    "device_id": "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+    "brew_id": null
+  }
+]
+```
+
+#### GET /api/ispindel/logs/_:brewId_
+
+- User Required
+- Gets a list of logs for a given brew
+
+```json title="Sample Response"
+[
+  {
+    "id": "b963fd29-8518-4275-bb25-a9932d3eafbe",
+    "datetime": "2024-10-11T00:25:06.175Z",
+    "angle": 27.339766,
+    "temperature": 77.7875,
+    "temp_units": "F",
+    "battery": 4.0980186,
+    "gravity": 0.94253594,
+    "interval": 180,
+    "calculated_gravity": 0,
+    "device_id": "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+    "brew_id": null
+  }
+]
+```
+
+#### PATCH /api/ispindel/logs/_:logId_
+
+- User Required
+- Allows user to edit a specific log
+- device_id query param needed to check if log belongs to user
+
+```typescript title="Sample Request"
+const id = "b963fd29-8518-4275-bb25-a9932d3eafbe";
+const device_id = "d6ed8ed5-2ff1-4692-bbcc-44c921363354";
+const fields = {
+  datetime: "2024-10-11T00:58:53.647Z",
+};
+
+const { data, status } = await axios.patch(
+  `${API_URL}/ispindel/logs/${id}?device_id=${device_id}`,
+  fields,
+  { headers: { Authorization: "Bearer " + token } }
+);
+```
+
+```json title="Sample Response"
+{
+  "id": "b963fd29-8518-4275-bb25-a9932d3eafbe",
+  "datetime": "2024-10-11T00:58:53.647Z",
+  "angle": 27.339766,
+  "temperature": 77.7875,
+  "temp_units": "F",
+  "battery": 4.0980186,
+  "gravity": 0.94253594,
+  "interval": 180,
+  "calculated_gravity": 0,
+  "device_id": "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+  "brew_id": null
+}
+```
+
+#### DELETE /api/ispindel/logs/_:logId_
+
+- User Required
+- Allows user to delete a specific log
+- device_id query param needed to check if log belongs to user
+
+```json title="Sample Response"
+{
+  "message": "Log b963fd29-8518-4275-bb25-a9932d3eafbe deleted successfully."
+}
+```
+
+#### GET /api/ispindel/brew
+
+- User Required
+- Gets a list of brews for the current user
+
+```json title="Sample Response"
+[
+  {
+    "id": "561b87a8-2146-45dd-8127-52eb0925ffd6",
+    "start_date": "2024-10-07T23:29:59.455Z",
+    "end_date": "2024-10-07T23:30:00.450Z",
+    "user_id": 1,
+    "latest_gravity": null,
+    "recipe_id": null
+  }
+]
+```
+
+#### POST /api/ispindel/brew
+
+- User Required
+- Starts a brew for a device
+- device_id required in body of request
+
+```json title="Sample Response"
+[
+  {
+    "brew": {
+      "id": "5d40fb11-1165-47b4-939b-255b91cdf72f",
+      "start_date": "2024-10-11T22:10:48.620Z",
+      "end_date": null,
+      "user_id": 1,
+      "latest_gravity": null,
+      "recipe_id": null
+    }
+  },
+  {
+    "device": {
+      "id": "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+      "device_name": "Test Device",
+      "recipe_id": null,
+      "user_id": 1,
+      "coefficients": [],
+      "brew_id": "5d40fb11-1165-47b4-939b-255b91cdf72f"
+    }
+  }
+]
+```
+
+#### PATCH /api/ispindel/brew
+
+- User Required
+- Ends a brew for a device
+- device_id AND brew_id required in body of request
+
+```json title="Sample Response"
+[
+  {
+    "brew": {
+      "id": "f68443fe-a3c8-4133-8128-09ca6a409a01",
+      "start_date": "2024-10-11T22:13:49.013Z",
+      "end_date": "2024-10-11T22:14:12.858Z",
+      "user_id": 1,
+      "latest_gravity": null,
+      "recipe_id": null
+    }
+  },
+  {
+    "device": {
+      "id": "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+      "device_name": "Test Device",
+      "recipe_id": null,
+      "user_id": 1,
+      "coefficients": [],
+      "brew_id": null
+    }
+  }
+]
+```
+
+#### PATCH /api/ispindel/brew/_:brewId_
+
+- User Required
+- Adds a meadtools recipe to the current brew
+- recipe_id required in body of request
+
+```json title="Sample Response"
+{
+  "id": "f68443fe-a3c8-4133-8128-09ca6a409a01",
+  "start_date": "2024-10-11T22:13:49.013Z",
+  "end_date": "2024-10-11T22:14:12.858Z",
+  "user_id": 1,
+  "latest_gravity": null,
+  "recipe_id": 4
+}
+```
+
+#### PATCH /api/ispindel/device/_:deviceId_
+
+- User Required
+- Used to update the coefficients for the device
+- coefficients added in body of request (an array of 4 numbers)
+
+```json title="Sample Response"
+{
+  "id": "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+  "device_name": "Test Device",
+  "recipe_id": null,
+  "user_id": 1,
+  "coefficients": [0.0000019428612, -0.0002776549, 0.014086239, 0.77926403],
+  "brew_id": null
+}
+```
+
 ### Recipes
 
 #### <span style="color: red">GET /api/recipes/</span>
@@ -231,7 +529,15 @@ type Recipe = {
   "nuteInfo": "{\"ppmYan\":[117],...",
   "primaryNotes": ["..."],
   "secondaryNotes": ["..."],
-  "private": false
+  "private": false,
+  "brews": [
+    {
+      "id": "d6ed8ed5-2ff1-4692-bbcc-44c921363354",
+      "start_date": "2024-10-11T00:02:31.610Z",
+      "end_date": "2024-10-11T00:02:31.610Z",
+      "latest_gravity": 1.1
+    }
+  ]
 }
 ```
 

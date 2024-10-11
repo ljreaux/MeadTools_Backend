@@ -818,7 +818,7 @@ export async function createLog(log: LogType) {
 }
 
 export async function getLogs(
-  deviceId: number,
+  deviceId: string,
   beginDate: Date,
   endDate: Date
 ) {
