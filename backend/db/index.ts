@@ -846,7 +846,8 @@ export async function getBrews(userId?: string) {
     const { rows: brews } = await client.query(
       `
     SELECT * FROM brews
-    WHERE user_id=$1;
+    WHERE user_id=$1
+    order by coalesce(end_date, CURRENT_TIMESTAMP) desc, start_date;
     `,
       [userId]
     );
@@ -857,7 +858,7 @@ export async function getBrews(userId?: string) {
   }
 }
 
-export async function startBrew(deviceId: string, userId?: string) {
+export async function startBrew(deviceId: string, userId?: string, brewName = null) {
   try {
     if (!userId) throw Error;
 
@@ -866,11 +867,11 @@ export async function startBrew(deviceId: string, userId?: string) {
     } = await client.query(
       `
     INSERT INTO brews
-    (user_id, start_date)
-    VALUES ($1, now())
+    (user_id, name, start_date)
+    VALUES ($1, $2, now())
     RETURNING *;
     `,
-      [userId]
+      [userId, brewName]
     );
     const {
       rows: [device],
@@ -921,6 +922,32 @@ export async function endBrew(
     );
 
     return [{ brew }, { device }];
+  } catch (error) {
+    throw error;
+  }
+}
+export async function setBrewName(
+  brewId: string,
+  userId?: string,
+  brewName = null
+) {
+  try {
+    if (!userId) throw Error;
+
+    const {
+      rows: [brew],
+    } = await client.query(
+      `
+    UPDATE brews
+    SET name=$1
+    WHERE user_id=$2 AND id=$3
+    RETURNING *;
+    `,
+      [brewName, userId, brewId]
+    );
+
+
+    return [{ brew }, { device: null }];
   } catch (error) {
     throw error;
   }

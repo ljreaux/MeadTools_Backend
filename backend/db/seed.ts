@@ -107,16 +107,17 @@ async function createTables() {
     );
 
     CREATE TABLE brews  (
-      id uuid not null default gen_random_uuid (),
-      start_date timestamp with time zone not null default now(),
-      end_date timestamp with time zone null,
-      user_id integer null,
-      latest_gravity real null,
-      recipe_id integer null,
-      constraint brews_pkey primary key (id),
-      constraint brews_recipe_id_fkey foreign key (recipe_id) references recipes (id),
-      constraint brews_user_id_fkey foreign key (user_id) references users (id)
-    );
+    id uuid not null default gen_random_uuid (),
+    start_date timestamp with time zone not null default now(),
+    end_date timestamp with time zone null,
+    user_id integer null,
+    latest_gravity real null,
+    recipe_id integer null,
+    name text null,
+    constraint brews_pkey primary key (id),
+    constraint brews_recipe_id_fkey foreign key (recipe_id) references recipes (id),
+    constraint brews_user_id_fkey foreign key (user_id) references users (id)
+  );
 
     CREATE TABLE devices (
       id uuid not null default gen_random_uuid (),
