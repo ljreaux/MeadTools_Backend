@@ -224,42 +224,41 @@ export async function getAllRecipesForUser(id: string | null) {
 
 export async function getRecipeInfo(recipeId: string) {
   try {
-    const { rows } = await client.query(
+    //* gets the appropriate recipe from the database and joins it with the iSpindel brews (if available)
+
+    //* returns :
+
+    //* {
+    //*  recipe: {
+    //*     ...,
+    //*     brews: [...]
+    //*   }
+    //* }
+
+    const { rows: [recipe] } = await client.query(
       `
-      SELECT * 
+      SELECT 
+          recipes.*,
+          COALESCE(
+            json_agg(
+              jsonb_build_object(
+                'id', brews.id,
+                'start_date', brews.start_date,
+                'end_date', brews.end_date,
+                'latest_gravity', brews.latest_gravity
+              )
+            ) FILTER (WHERE brews.id IS NOT NULL), '[]'
+          ) AS brews
       FROM recipes
       LEFT JOIN brews 
-      ON brews.recipe_id= recipes.id
-      WHERE recipes.id=$1;
-    `,
+        ON brews.recipe_id = recipes.id
+      WHERE recipes.id = $1
+      GROUP BY recipes.id;
+      `,
       [recipeId]
     );
-    console.log(rows)
-    const recipe = { ...rows[0] };
 
-    if (rows[0].start_date) {
-      recipe.id = recipe.recipe_id;
 
-    }
-    delete recipe.recipe_id
-    delete recipe.start_date;
-    delete recipe.end_date;
-    delete recipe.latest_gravity;
-
-    rows.forEach((row) => {
-      if (!row.start_date) return;
-      const currentBrew = {
-        id: row.id,
-        start_date: row.start_date,
-        end_date: row.end_date,
-        latest_gravity: row.latest_gravity,
-      };
-      if (recipe.brews) {
-        recipe.brews.push(currentBrew);
-      } else recipe.brews = [currentBrew];
-    });
-
-    console.log(recipe);
     if (!recipe)
       return { name: "RecipeNotFoundError", message: "Recipe not found" };
     return recipe;
