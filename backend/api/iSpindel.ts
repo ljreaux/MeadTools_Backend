@@ -2,7 +2,7 @@ import express from 'express';
 import { requireUser } from './utils';
 import { UserAuthInfoRequest } from '.';
 const iSpindelRouter = express.Router();
-import { addBrewRec, calcGravity, createHydrometerToken, createLog, deleteLog, endBrew, getBrews, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, setBrewName, startBrew, updateBrewGravity, updateCoeff, updateLog, verifyToken } from '../db';
+import { addBrewRec, calcGravity, createHydrometerToken, createLog, deleteBrew, deleteDevice, deleteLog, endBrew, getBrews, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, setBrewName, startBrew, updateBrewGravity, updateCoeff, updateLog, verifyToken } from '../db';
 
 iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
@@ -156,6 +156,22 @@ iSpindelRouter.patch("/brew/:brew_id", requireUser, async (req: UserAuthInfoRequ
   }
 });
 
+iSpindelRouter.delete('/brew/:brew_id', requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const { brew_id } = req.params;
+    const queryParams = req.query;
+    const device_id = queryParams.device_id as string;
+
+    // stop brew and update device table brew_id field to null
+    const brew = await deleteBrew(brew_id, device_id, req.user?.id);
+
+    res.send(brew);
+  }
+  catch (err) {
+    next({ error: err.message });
+  }
+})
+
 iSpindelRouter.patch("/device/:device_id", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
     const { device_id } = req.params;
@@ -168,6 +184,20 @@ iSpindelRouter.patch("/device/:device_id", requireUser, async (req: UserAuthInfo
     next({ error: err.message });
   }
 });
+
+
+iSpindelRouter.delete("/device/:device_id", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const { device_id } = req.params;
+
+    const device = await deleteDevice(device_id, req.user?.id)
+
+
+    res.send(device);
+  } catch (err) {
+    next({ error: err.message });
+  }
+})
 
 
 iSpindelRouter.post("/register", requireUser, async (req: UserAuthInfoRequest, res, next) => {

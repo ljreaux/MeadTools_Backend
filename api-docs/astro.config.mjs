@@ -10,5 +10,5 @@ export default defineConfig({
     }),
   ],
   outDir: "../dist/api/docs",
-  base: "/api/",
+  base: "/api",
 });

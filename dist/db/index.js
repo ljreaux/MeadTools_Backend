@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateCoeff = exports.getDevicesForUser = exports.deleteLog = exports.updateLog = exports.getLogsForBrew = exports.addBrewRec = exports.setBrewName = exports.endBrew = exports.startBrew = exports.getBrews = exports.getLogs = exports.createLog = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
+exports.deleteDevice = exports.updateCoeff = exports.getDevicesForUser = exports.deleteLog = exports.updateLog = exports.getLogsForBrew = exports.addBrewRec = exports.setBrewName = exports.endBrew = exports.startBrew = exports.getBrews = exports.getLogs = exports.createLog = exports.deleteBrew = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
 const short_unique_id_1 = __importDefault(require("short-unique-id"));
 exports.client = new pg_1.Client({
@@ -581,6 +581,33 @@ async function updateBrewGravity(brewId, gravity) {
     }
 }
 exports.updateBrewGravity = updateBrewGravity;
+async function deleteBrew(brewId, deviceId, userId) {
+    try {
+        if (userId) {
+            await exports.client.query(`
+        UPDATE devices
+        SET brew_id=null
+        WHERE id=$1 AND user_id=$2;`, [deviceId, userId]);
+            await exports.client.query(`
+      DELETE FROM logs
+      WHERE brew_id=$1 AND device_id=$2
+      RETURNING *;
+    `, [brewId, deviceId]);
+            const { rows: [brew] } = await exports.client.query(`
+      DELETE FROM brews
+      WHERE id=$1 AND user_id=$2
+      RETURNING *;
+    `, [brewId, userId]);
+            return {
+                message: `Your brew ${brew.name || brew.id} has been successfully deleted along with all of its logs.`
+            };
+        }
+    }
+    catch (error) {
+        throw error;
+    }
+}
+exports.deleteBrew = deleteBrew;
 async function createLog(log) {
     try {
         const { rows: [newLog], } = await exports.client.query(`
@@ -810,3 +837,29 @@ async function updateCoeff(deviceId, coefficients, id) {
     }
 }
 exports.updateCoeff = updateCoeff;
+async function deleteDevice(deviceId, userId) {
+    try {
+        if (!userId)
+            throw Error;
+        await exports.client.query(`
+      DELETE FROM logs 
+      WHERE device_id=$1 
+      AND brew_id IS NULL;
+      `, [deviceId]);
+        await exports.client.query(`
+      UPDATE logs 
+      SET device_id=null
+      WHERE device_id=$1;
+      `, [deviceId]);
+        await exports.client.query(`
+      DELETE FROM devices
+      WHERE id=$1 AND user_id=$2;
+    `, [deviceId, userId]);
+        return { message: `Device ${deviceId} deleted successfully.` };
+    }
+    catch (err) {
+        console.log(err);
+        throw new Error("Failed to delete device");
+    }
+}
+exports.deleteDevice = deleteDevice;

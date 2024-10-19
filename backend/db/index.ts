@@ -787,6 +787,36 @@ export async function updateBrewGravity(brewId: string, gravity: number) {
   }
 }
 
+export async function deleteBrew(brewId: string, deviceId: string, userId?: string) {
+  try {
+    if (userId) {
+      await client.query(`
+        UPDATE devices
+        SET brew_id=null
+        WHERE id=$1 AND user_id=$2;`,
+        [deviceId, userId]);
+      await client.query(`
+      DELETE FROM logs
+      WHERE brew_id=$1 AND device_id=$2
+      RETURNING *;
+    `, [brewId, deviceId]);
+      const { rows: [brew] } = await client.query(`
+      DELETE FROM brews
+      WHERE id=$1 AND user_id=$2
+      RETURNING *;
+    `, [brewId, userId])
+
+
+      return {
+        message: `Your brew ${brew.name || brew.id} has been successfully deleted along with all of its logs.`
+      }
+    }
+  }
+  catch (error) {
+    throw error;
+  }
+}
+
 export async function createLog(log: LogType) {
   try {
     const {
@@ -1100,5 +1130,39 @@ export async function updateCoeff(
     return device;
   } catch (error) {
     throw error;
+  }
+}
+
+export async function deleteDevice(deviceId: string, userId?: string) {
+  try {
+    if (!userId) throw Error;
+
+    await client.query(`
+      DELETE FROM logs 
+      WHERE device_id=$1 
+      AND brew_id IS NULL;
+      `,
+      [deviceId]
+    );
+
+    await client.query(
+      `
+      UPDATE logs 
+      SET device_id=null
+      WHERE device_id=$1;
+      `, [deviceId]
+    )
+
+    await client.query(
+      `
+      DELETE FROM devices
+      WHERE id=$1 AND user_id=$2;
+    `,
+      [deviceId, userId]
+    );
+    return { message: `Device ${deviceId} deleted successfully.` };
+  } catch (err) {
+    console.log(err);
+    throw new Error("Failed to delete device");
   }
 }
