@@ -119,7 +119,6 @@ iSpindelRouter.post("/brew", utils_1.requireUser, async (req, res, next) => {
 iSpindelRouter.patch("/brew", utils_1.requireUser, async (req, res, next) => {
     try {
         const { device_id, brew_id, brew_name } = req.body;
-        console.log(brew_name);
         // stop brew and update device table brew_id field to null
         let brew;
         if (!brew_name) {
@@ -127,7 +126,6 @@ iSpindelRouter.patch("/brew", utils_1.requireUser, async (req, res, next) => {
         }
         else
             brew = await (0, db_1.setBrewName)(brew_id, req.user?.id, brew_name);
-        console.log(brew);
         res.send(brew);
     }
     catch (err) {
@@ -149,10 +147,8 @@ iSpindelRouter.patch("/brew/:brew_id", utils_1.requireUser, async (req, res, nex
 iSpindelRouter.delete('/brew/:brew_id', utils_1.requireUser, async (req, res, next) => {
     try {
         const { brew_id } = req.params;
-        const queryParams = req.query;
-        const device_id = queryParams.device_id;
         // stop brew and update device table brew_id field to null
-        const brew = await (0, db_1.deleteBrew)(brew_id, device_id, req.user?.id);
+        const brew = await (0, db_1.deleteBrew)(brew_id, req.user?.id);
         res.send(brew);
     }
     catch (err) {
@@ -173,6 +169,7 @@ iSpindelRouter.delete("/device/:device_id", utils_1.requireUser, async (req, res
     try {
         const { device_id } = req.params;
         const device = await (0, db_1.deleteDevice)(device_id, req.user?.id);
+        console.log(device);
         res.send(device);
     }
     catch (err) {

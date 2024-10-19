@@ -130,13 +130,12 @@ iSpindelRouter.post("/brew", requireUser, async (req: UserAuthInfoRequest, res, 
 iSpindelRouter.patch("/brew", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
     const { device_id, brew_id, brew_name } = req.body;
-    console.log(brew_name)
+
     // stop brew and update device table brew_id field to null
     let brew;
     if (!brew_name) { brew = await endBrew(device_id, brew_id, req.user?.id); }
     else brew = await setBrewName(brew_id, req.user?.id, brew_name);
 
-    console.log(brew)
     res.send(brew);
   } catch (err) {
     next({ error: err.message });
@@ -159,11 +158,9 @@ iSpindelRouter.patch("/brew/:brew_id", requireUser, async (req: UserAuthInfoRequ
 iSpindelRouter.delete('/brew/:brew_id', requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
     const { brew_id } = req.params;
-    const queryParams = req.query;
-    const device_id = queryParams.device_id as string;
 
     // stop brew and update device table brew_id field to null
-    const brew = await deleteBrew(brew_id, device_id, req.user?.id);
+    const brew = await deleteBrew(brew_id, req.user?.id);
 
     res.send(brew);
   }
@@ -192,7 +189,7 @@ iSpindelRouter.delete("/device/:device_id", requireUser, async (req: UserAuthInf
 
     const device = await deleteDevice(device_id, req.user?.id)
 
-
+    console.log(device);
     res.send(device);
   } catch (err) {
     next({ error: err.message });

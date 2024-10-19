@@ -21,7 +21,7 @@ ingredientsRouter.get("/", async (req, res, next) => {
 ingredientsRouter.post("/", requireAdmin, async (req, res, next) => {
   try {
     const { body } = req;
-    console.log(body)
+
     const newIngredient = await createIngredient(body);
     res.send(newIngredient);
   } catch ({ name, message }) {

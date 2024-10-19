@@ -210,7 +210,6 @@ usersRouter.get("/oauth/desktop", async (req, res) => {
         res.send(message);
     }
     const redirectTo = `${DESKTOP_REDIRECT_URL}?token=${userResponse?.accessToken}&refreshToken=${userResponse?.refreshToken}&email=${userResponse?.email}`;
-    console.log(redirectTo);
     res.redirect(301, redirectTo);
 });
 usersRouter.get("/", utils_1.requireAdmin, async (req, res) => {

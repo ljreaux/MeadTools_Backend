@@ -581,18 +581,32 @@ async function updateBrewGravity(brewId, gravity) {
     }
 }
 exports.updateBrewGravity = updateBrewGravity;
-async function deleteBrew(brewId, deviceId, userId) {
+async function deleteBrew(brewId, userId) {
     try {
         if (userId) {
-            await exports.client.query(`
+            const { rows: [device] } = await exports.client.query(`
+        SELECT *
+        FROM devices
+        WHERE user_id=$1 AND brew_id=$2;
+      `, [userId, brewId]);
+            const deviceId = device?.id;
+            if (deviceId) {
+                await exports.client.query(`
         UPDATE devices
         SET brew_id=null
         WHERE id=$1 AND user_id=$2;`, [deviceId, userId]);
-            await exports.client.query(`
+                await exports.client.query(`
       DELETE FROM logs
       WHERE brew_id=$1 AND device_id=$2
       RETURNING *;
     `, [brewId, deviceId]);
+            }
+            else {
+                await exports.client.query(`
+      DELETE FROM logs
+      WHERE brew_id=$1
+      RETURNING *;`, [brewId]);
+            }
             const { rows: [brew] } = await exports.client.query(`
       DELETE FROM brews
       WHERE id=$1 AND user_id=$2
