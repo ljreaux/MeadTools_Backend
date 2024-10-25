@@ -2,7 +2,7 @@ import express from 'express';
 import { requireUser } from './utils';
 import { UserAuthInfoRequest } from '.';
 const iSpindelRouter = express.Router();
-import { addBrewRec, calcGravity, createHydrometerToken, createLog, deleteBrew, deleteDevice, deleteLog, endBrew, getBrews, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, setBrewName, startBrew, updateBrewGravity, updateCoeff, updateLog, verifyToken } from '../db';
+import { addBrewRec, calcGravity, createHydrometerToken, createLog, deleteBrew, deleteDevice, deleteLog, deleteLogsInRange, endBrew, getBrews, getDevicesForUser, getHydrometerToken, getLogs, getLogsForBrew, registerDevice, setBrewName, startBrew, updateBrewGravity, updateCoeff, updateLog, verifyToken } from '../db';
 
 iSpindelRouter.get("/", requireUser, async (req: UserAuthInfoRequest, res, next) => {
   try {
@@ -81,6 +81,21 @@ iSpindelRouter.patch("/logs/:logId", requireUser, async (req: UserAuthInfoReques
     const device_id = queryParams.device_id as string;
     // finds log, checks if user listed on brewId is userRequesting, then updates log
     const logs = await updateLog(logId, body, device_id);
+
+    res.send(logs);
+  } catch (err) {
+    next(err.message);
+  }
+});
+iSpindelRouter.delete("/logs/range", requireUser, async (req: UserAuthInfoRequest, res, next) => {
+  try {
+    const { id: userId } = req.user || { id: undefined };
+    const queryParams = req.query;
+    const device_id = queryParams.device_id as string;
+    const start_date = new Date(queryParams.start_date as string)
+    const end_date = new Date(queryParams.end_date as string)
+
+    const logs = await deleteLogsInRange(device_id, start_date, end_date, userId)
 
     res.send(logs);
   } catch (err) {

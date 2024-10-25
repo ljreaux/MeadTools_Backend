@@ -1182,3 +1182,23 @@ export async function deleteDevice(deviceId: string, userId?: string) {
     throw new Error("Failed to delete device");
   }
 }
+
+export async function deleteLogsInRange(device_id: string, startDate: Date, endDate: Date, userId?: string) {
+  try {
+    if (!userId) throw Error;
+    const { rows: logs } = await client.query(`
+      DELETE FROM logs 
+      WHERE device_id=$1 
+      AND datetime BETWEEN $2 AND $3
+      RETURNING *;
+      `,
+      [device_id, startDate, endDate]
+    )
+
+    if (!logs.length) return { message: "No logs to delete in range." };
+    return { message: `Logs deleted successfully.` };
+  } catch (err) {
+    console.log(err);
+    throw new Error("Failed to delete logs");
+  }
+}
