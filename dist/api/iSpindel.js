@@ -84,6 +84,20 @@ iSpindelRouter.patch("/logs/:logId", utils_1.requireUser, async (req, res, next)
         next(err.message);
     }
 });
+iSpindelRouter.delete("/logs/range", utils_1.requireUser, async (req, res, next) => {
+    try {
+        const { id: userId } = req.user || { id: undefined };
+        const queryParams = req.query;
+        const device_id = queryParams.device_id;
+        const start_date = new Date(queryParams.start_date);
+        const end_date = new Date(queryParams.end_date);
+        const logs = await (0, db_1.deleteLogsInRange)(device_id, start_date, end_date, userId);
+        res.send(logs);
+    }
+    catch (err) {
+        next(err.message);
+    }
+});
 iSpindelRouter.delete("/logs/:logId", utils_1.requireUser, async (req, res, next) => {
     try {
         const { logId } = req.params;

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteDevice = exports.updateCoeff = exports.getDevicesForUser = exports.deleteLog = exports.updateLog = exports.getLogsForBrew = exports.addBrewRec = exports.setBrewName = exports.endBrew = exports.startBrew = exports.getBrews = exports.getLogs = exports.createLog = exports.deleteBrew = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
+exports.deleteLogsInRange = exports.deleteDevice = exports.updateCoeff = exports.getDevicesForUser = exports.deleteLog = exports.updateLog = exports.getLogsForBrew = exports.addBrewRec = exports.setBrewName = exports.endBrew = exports.startBrew = exports.getBrews = exports.getLogs = exports.createLog = exports.deleteBrew = exports.updateBrewGravity = exports.calcGravity = exports.registerDevice = exports.verifyToken = exports.getHydrometerToken = exports.createHydrometerToken = exports.deleteYeast = exports.getYeastByBrand = exports.getYeastById = exports.getYeastByName = exports.getAllYeasts = exports.updateYeast = exports.createYeast = exports.deleteIngredient = exports.getIngredientByName = exports.getIngredientsByCategory = exports.getIngredient = exports.getAllIngredients = exports.updateIngredient = exports.deleteRecipe = exports.createIngredient = exports.updateRecipe = exports.createRecipe = exports.getRecipeInfo = exports.getAllRecipesForUser = exports.getAllRecipes = exports.deleteUser = exports.getUserByGoogleId = exports.getUserByEmail = exports.getUser = exports.getAllUsers = exports.updateUser = exports.createUser = exports.client = void 0;
 const pg_1 = require("pg");
 const short_unique_id_1 = __importDefault(require("short-unique-id"));
 exports.client = new pg_1.Client({
@@ -877,3 +877,23 @@ async function deleteDevice(deviceId, userId) {
     }
 }
 exports.deleteDevice = deleteDevice;
+async function deleteLogsInRange(device_id, startDate, endDate, userId) {
+    try {
+        if (!userId)
+            throw Error;
+        const { rows: logs } = await exports.client.query(`
+      DELETE FROM logs 
+      WHERE device_id=$1 
+      AND datetime BETWEEN $2 AND $3
+      RETURNING *;
+      `, [device_id, startDate, endDate]);
+        if (!logs.length)
+            return { message: "No logs to delete in range." };
+        return { message: `Logs deleted successfully.` };
+    }
+    catch (err) {
+        console.log(err);
+        throw new Error("Failed to delete logs");
+    }
+}
+exports.deleteLogsInRange = deleteLogsInRange;
