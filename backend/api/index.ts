@@ -6,7 +6,9 @@ import jwt from "jsonwebtoken";
 import { getUser } from "../db/index";
 const { ACCESS_TOKEN_SECRET = "", REFRESH_TOKEN_SECRET = "" } = process.env;
 
-apiRouter.use(express.static(path.join(__dirname, "documentation")));
+const buildPath = path.join(__dirname, "docs")
+
+apiRouter.use(express.static(buildPath));
 
 interface JwtPayload {
   id: string;
@@ -61,4 +63,11 @@ apiRouter.use("/ingredients", ingredientsRouter);
 import yeastsRouter from "./yeasts";
 apiRouter.use("/yeasts", yeastsRouter);
 
+import iSpindelRouter from "./iSpindel";
+
+apiRouter.use("/iSpindel", iSpindelRouter);
+
+apiRouter.use("*", async (req, res) => {
+  res.sendFile(path.join(buildPath, 'index.html'));
+})
 export default apiRouter;

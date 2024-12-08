@@ -13,11 +13,15 @@ async function dropTables() {
     try {
         console.log("Starting drop tables");
         await index_1.client.query(`
+    DROP TABLE IF EXISTS logs;
+    DROP TABLE IF EXISTS devices;
+    DROP TABLE IF EXISTS brews;
     DROP TABLE IF EXISTS recipes;
     DROP TABLE IF EXISTS users;
     DROP TABLE IF EXISTS ingredients;
-    DROP TABLE IF EXISTS ingredient_categories;
-    DROP TABLE IF EXISTS yeasts;`);
+    DROP TABLE IF EXISTS yeasts;
+    DROP TYPE IF EXISTS temp_units;
+    `);
         console.log("Tables dropped");
     }
     catch (error) {
@@ -29,13 +33,20 @@ async function createTables() {
     try {
         console.log("Creating tables...");
         await index_1.client.query(`
+    CREATE TYPE temp_units AS ENUM ('F', 'C', 'K');
+
     CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email varchar(255) UNIQUE NOT NULL,
-      password varchar(255),
-      google_id varchar(255),
-      role varchar(255) DEFAULT 'user'
-    );
+      id serial not null,
+      email character varying(255) not null,
+      password character varying(255) null,
+      google_id character varying(255) null,
+      role character varying(255) null default 'user'::character varying,
+      hydro_token text null,
+      constraint users_pkey primary key (id),
+      constraint users_email_key unique (email),
+      constraint users_hydro_token_key unique (hydro_token),
+      constraint users_hydro_token_check check ((length(hydro_token) = 10))
+    ); 
 
     CREATE TABLE recipes (
       id SERIAL PRIMARY KEY,
@@ -68,6 +79,49 @@ async function createTables() {
       tolerance numeric NOT NULL,
       low_temp numeric NOT NULL,
       high_temp numeric NOT NULL
+    );
+
+    CREATE TABLE brews  (
+    id uuid not null default gen_random_uuid (),
+    start_date timestamp with time zone not null default now(),
+    end_date timestamp with time zone null,
+    user_id integer null,
+    latest_gravity real null,
+    recipe_id integer null,
+    name text null,
+    constraint brews_pkey primary key (id),
+    constraint brews_recipe_id_fkey foreign key (recipe_id) references recipes (id),
+    constraint brews_user_id_fkey foreign key (user_id) references users (id)
+  );
+
+    CREATE TABLE devices (
+      id uuid not null default gen_random_uuid (),
+      device_name text null,
+      recipe_id integer null,
+      user_id integer not null,
+      coefficients real[] not null default '{}'::real[],
+      brew_id uuid null,
+      constraint devices_pkey primary key (id),
+      constraint devices_brew_id_fkey foreign key (brew_id) references brews (id),
+      constraint devices_recipe_id_fkey foreign key (recipe_id) references recipes (id),
+      constraint devices_user_id_fkey foreign key (user_id) references users (id)
+    );
+
+    CREATE TABLE logs (
+      id uuid not null default gen_random_uuid (),
+      datetime timestamp with time zone not null default now(),
+      angle real not null,
+      temperature real not null,
+      temp_units public.temp_units not null,
+      battery real not null,
+      gravity real not null,
+      interval integer not null,
+      calculated_gravity real null,
+      device_id uuid null,
+      brew_id uuid null,
+      constraint logs_pkey primary key (id),
+      constraint logs_brew_id_fkey foreign key (brew_id) references brews (id),
+      constraint logs_device_id_fkey foreign key (device_id) references devices (id)
     );
 
     `);
